@@ -1,7 +1,7 @@
 <template>
   <q-page class="q-pt-xl">
     <div class="row align-start justify-center">
-      <div class="col-5 text-center">
+      <div class="col-10 col-sm-5 col-md-5 col-lg-5 text-center">
         <q-form 
           v-if="auth_token"
           @submit="submitFile">
@@ -10,12 +10,13 @@
           v-model="file"
           label="Select File"
           accept=".docx, .doc"
+          class="q-my-sm"
           >
           <template v-slot:prepend>
             <q-icon name="attach_file" />
           </template>
         </q-file>
-        <q-input filled v-model="date" label="Verify Date" v-show="file">
+        <q-input filled v-model="date" label="Verify Date" v-show="file" class="q-my-sm">
           <template v-slot:append>
             <q-icon name="event" class="cursor-pointer">
               <q-popup-proxy cover transition-show="scale" transition-hide="scale">
@@ -28,13 +29,13 @@
             </q-icon>
           </template>
         </q-input>
-        <q-select v-model="user" :options="users" label="Select User Initials" v-show="show_users"/>
+        <q-select v-model="user" :options="users" label="Select User Initials" v-show="show_users" class="q-my-sm"/>
           <q-btn
             v-show="user"
             color="primary"
             label="Add to Google Calendar"
             type="submit"
-            class="q-px-lg q-my-md"
+            class="q-px-lg q-mt-sm"
           />
         </q-form>
       </div>
@@ -52,7 +53,7 @@
       <!-- <q-btn class="outline" color="primary" id="authorize_button" @click="handleAuthClick" v-show="!auth_token">Authorize</q-btn> -->
       <q-btn class="outline" id="authorize_button" @click="handleAuthClick" v-show="!auth_token">
         <img width="20" style="margin-bottom:3px; margin-right:5px" src="~assets/Google_G_Logo.svg" alt="">Connect Google</q-btn>
-      <q-btn class="outline" id="signout_button" @click="handleSignoutClick" v-show="auth_token">Sign Out</q-btn>
+      <q-btn class="outline q-my-sm" id="signout_button" @click="handleSignoutClick" v-show="auth_token">Sign Out</q-btn>
       <!-- <q-btn class="outline q-my-lg" id="signout_button" @click="get_users">Get Users</q-btn> -->
 
       <!-- <pre id="content" style="white-space: pre-wrap;"></pre> -->

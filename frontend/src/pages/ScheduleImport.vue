@@ -28,10 +28,11 @@
             <q-icon name="attach_file" />
           </template>
         </q-file>
+        <q-select v-model="user" :options="users" label="Select User Initials" v-show="show_users"/>
           <q-btn
-            :v-if="file"
+            v-show="user"
             color="primary"
-            label="Submit"
+            label="Add to Google Calendar"
             type="submit"
             class="q-px-lg q-my-md"
           />
@@ -42,6 +43,9 @@
       <!-- <q-btn class="outline" color="primary" @click="test_API" label="test API"></q-btn> -->
       <!-- <q-btn class="outline" color="primary" @click="test_backend" label="Test Backend"></q-btn> -->
       <!-- <q-btn class="outline" color="primary" @click="add_to_calendar" label="Test Event"></q-btn> -->
+      <!-- <div v-show="user_shifts">
+        {{ user_shifts }}
+      </div> -->
     </div>
     <div id="google_API_test" class="col-10 text-center">
       <div id="my-signin2"></div>
@@ -49,6 +53,7 @@
       <q-btn class="outline" id="authorize_button" @click="handleAuthClick" v-show="!auth_token">
         <img width="20" style="margin-bottom:3px; margin-right:5px" src="~assets/Google_G_Logo.svg" alt="">Connect Google</q-btn>
       <q-btn class="outline" id="signout_button" @click="handleSignoutClick" v-show="auth_token">Sign Out</q-btn>
+      <q-btn class="outline q-my-lg" id="signout_button" @click="get_users">Get Users</q-btn>
 
       <!-- <pre id="content" style="white-space: pre-wrap;"></pre> -->
     </div>
@@ -89,6 +94,10 @@ export default defineComponent({
       gisInited: false,
       gmail: ref(''),
       auth_token: ref(false),
+      users: ref([]),
+      user: ref(null),
+      show_users: ref(false),
+      user_shifts: ref([]),
       // onFileSelected(file) {
       //   this.file = file
       //   console.log(file)
@@ -99,6 +108,16 @@ export default defineComponent({
       //   this.label = "Select File"
       // },
     };
+  },
+  watch: {
+    file(newValue, oldValue) {
+      console.log("triggered")
+      this.user = null
+      this.get_users()
+    },
+    user(newValue, oldValue) {
+      console.log(newValue)
+    }
   },
   methods: {
     async submitFile() {
@@ -113,6 +132,7 @@ export default defineComponent({
         let file = this.file
         await formData.append("file", file)
         await formData.append("date", this.date)
+        await formData.append("user", this.user)
         // await formData.append("gmail", this.gmail)
         console.log(file)
         console.log("formData: ", formData)
@@ -146,6 +166,7 @@ export default defineComponent({
                   "timeZone": "America/Los_Angeles"
                 },
               }
+              this.user_shifts.push(new_event)
               batch.add(gapi.client.calendar.events.insert({
                 'calendarId': 'primary',
                 'resource': new_event
@@ -160,6 +181,7 @@ export default defineComponent({
               // });
             }
           );
+          // ====== NOTE: this loads the schedule to Google Calendar ============= 
           batch.then(function(){
             console.log('all jobs done!!!')
           });
@@ -188,6 +210,26 @@ export default defineComponent({
               color: "red",
             })
           })
+      }
+    },
+
+    async get_users() {
+      console.log("triggered")
+      if (this.file) {
+        localStorage.setItem("gmail", this.gmail)
+        let formData = new FormData()
+        let file = this.file
+        await formData.append("file", file)
+        await formData.append("date", this.date)
+        // await formData.append("gmail", this.gmail)
+        console.log(file)
+        console.log("formData: ", formData)
+        APIService.get_user_list(formData)
+        .then(res => {
+          console.log(res.data)
+          this.users = res.data
+          this.show_users = true
+        })
       }
     },
 

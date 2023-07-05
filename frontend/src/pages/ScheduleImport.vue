@@ -53,7 +53,7 @@
       <q-btn class="outline" id="authorize_button" @click="handleAuthClick" v-show="!auth_token">
         <img width="20" style="margin-bottom:3px; margin-right:5px" src="~assets/Google_G_Logo.svg" alt="">Connect Google</q-btn>
       <q-btn class="outline" id="signout_button" @click="handleSignoutClick" v-show="auth_token">Sign Out</q-btn>
-      <q-btn class="outline q-my-lg" id="signout_button" @click="get_users">Get Users</q-btn>
+      <!-- <q-btn class="outline q-my-lg" id="signout_button" @click="get_users">Get Users</q-btn> -->
 
       <!-- <pre id="content" style="white-space: pre-wrap;"></pre> -->
     </div>

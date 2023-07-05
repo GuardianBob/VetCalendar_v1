@@ -3,8 +3,8 @@ from rest_framework import viewsets
 from .serializers import TodoSerializer
 from .models import Todo
 from django.views.decorators.csrf import csrf_exempt
-from .scripts import convert_schedule, test_calendar, test_event
-import datetime
+from .scripts import convert_schedule, test_calendar, test_event, get_users
+import datetime, json
 # Create your views here.
 
 class TodoView(viewsets.ModelViewSet):
@@ -26,7 +26,7 @@ month_list = {
     "Dec": "12"
 }
 
-
+month_abbrev = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 @csrf_exempt 
 def upload_file(request):
@@ -42,6 +42,19 @@ def upload_file(request):
     contents = convert_schedule(file_name, month, year)
     print("the contents are: ", contents) 
     return HttpResponse(contents)
+
+@csrf_exempt 
+def return_user_list(request):
+    file_name = request.FILES['file']
+    file_month = "false"
+    for month in month_abbrev:
+        if month.lower() in file_name.name.lower():
+            print(month)
+            file_month = month
+    users = get_users(file_name)
+    # print("contents", users)
+    content = json.dumps({"month": file_month, "users":users})
+    return HttpResponse(content)
 
 @csrf_exempt 
 def calendar_test(request):

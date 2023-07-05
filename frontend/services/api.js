@@ -43,6 +43,23 @@ class APIService {
     return api.post('/calendar/test_event');
   }
 
+  get_user_list(formData) {
+    let upload_url = ''
+    if (process.env.DEV_ENV == "true") {
+      upload_url = `http://${process.env.REST_API_HOST}:${process.env.REST_API_PORT}/return_user_list`
+    } else {
+      upload_url = `https://${process.env.REST_API_LIVE}/return_user_list`
+    }
+    // upload_url = `https://${process.env.REST_API_LIVE}/return_user_list`
+    console.log("url", upload_url);
+    return axios({
+      method: "post",
+      url: upload_url,
+      data: formData,
+      headers: { "Content-Type": "multipart/form-data" },
+    })
+  }
+
 }
 
 export default new APIService();

@@ -103,6 +103,22 @@ month_variables = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "
 
 # wordDoc = Document(filedialog.askopenfilename( filetypes = ( (".docx .doc files", "*.docx *.doc"),("All files", "*.*") ) ))
 
+month_abbrev = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+month_list = [
+    "january", "jan",
+    "february", "feb",
+    "march", "mar",
+    "april", "apr",
+    "may",
+    "june", "jun",
+    "july", "jul",
+    "august", "aug",
+    "september", "sept",
+    "october", "oct",
+    "november", "nov",
+    "december", "dec"
+  ]
 
 def convert_schedule(schedule, month, year):
   user_month = month
@@ -221,6 +237,29 @@ def convert_schedule(schedule, month, year):
   return json_shifts
 
 SCOPES = ['https://www.googleapis.com/auth/calendar']
+
+def get_users(schedule):
+  # print(schedule.name)
+  # if any(month in schedule.name.lower() for month in month_list):
+  # file_month = ""
+  # for month in month_abbrev:
+  #   if month.lower() in schedule.name.lower():
+  #       print(month)
+  #       file_month = month
+  wordDoc = Document(schedule) # Identify schedule as a Word Doc
+  user_list = []
+  for table in wordDoc.tables:
+    for row in table.rows:
+      row_text = ''
+      for cell in row.cells:
+        row_text = row_text + cell.text + ","
+        if cell.text.isalpha() and len(cell.text) == 2:
+          # print(f'cell: {cell.text}')
+          if cell.text not in user_list:          
+            user_list.append(cell.text)
+    print(user_list)
+    # return (json.dumps(user_list))
+    return user_list
 
 
 def test_calendar():

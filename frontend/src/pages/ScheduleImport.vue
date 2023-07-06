@@ -4,7 +4,7 @@
       <div class="col-10 col-sm-5 col-md-5 col-lg-5 text-center">
         <q-form 
           v-if="auth_token"
-          @submit="submitFile">
+          @submit="getShifts">
           <!-- <q-input filled v-model="gmail" required type="email" label="Gmail"></q-input> -->
           <q-file
           v-model="file"
@@ -30,13 +30,18 @@
           </template>
         </q-input>
         <q-select v-model="user" :options="users" label="Select User Initials" v-show="show_users" class="q-my-sm"/>
-          <q-btn
-            v-show="user"
-            color="primary"
-            label="Add to Google Calendar"
-            type="submit"
-            class="q-px-lg q-mt-sm"
-          />
+        <div class="row q-py-sm">
+          <div class="col-12 text-center" v-for="(shift, index) in user_shifts" :key="index">
+            {{ splitDate(shift.start.dateTime) }} - <span class="text-weight-bold">{{ shift.summary }}</span>
+          </div>
+        </div>
+        <q-btn
+          v-show="user"
+          color="primary"
+          label="Add to Google Calendar"
+          type="submit"
+          class="q-px-lg q-mt-sm"
+        />
         </q-form>
       </div>
     </div>
@@ -44,9 +49,7 @@
       <!-- <q-btn class="outline" color="primary" @click="test_API" label="test API"></q-btn> -->
       <!-- <q-btn class="outline" color="primary" @click="test_backend" label="Test Backend"></q-btn> -->
       <!-- <q-btn class="outline" color="primary" @click="add_to_calendar" label="Test Event"></q-btn> -->
-      <!-- <div v-show="user_shifts">
-        {{ user_shifts }}
-      </div> -->
+      
     </div>
     <div id="google_API_test" class="col-10 text-center">
       <div id="my-signin2"></div>
@@ -99,6 +102,7 @@ export default defineComponent({
       user: ref(null),
       show_users: ref(false),
       user_shifts: ref([]),
+      submit_button: ref("Get Shifts"),
       // onFileSelected(file) {
       //   this.file = file
       //   console.log(file)
@@ -118,22 +122,39 @@ export default defineComponent({
     },
     user(newValue, oldValue) {
       console.log(newValue)
+      this.getShifts()
     }
   },
+  computed: {
+    // code to take a string and return the first 10 characters 
+    
+      
+  },
   methods: {
-    async submitFile() {
+    splitDate(date) {
+      let shift_date = new Date(date)
+      let month = shift_date.toLocaleString('default', {month:'short'})
+      let day = shift_date.toLocaleString('default', {weekday:'short'})
+      let day_date = date.slice(8, 10)
+      let date_string = `${day} - ${month} ${day_date} ${date.slice(0,4)} - ${date.slice(11, 16)}`
+      return date_string
+    },
+
+    async getShifts() {
       // const request = gapi.client.calendar.events.insert({
       //   'calendarId': 'primary',
       //   'resource': event
       // });
 
       if (this.file) {
+        this.user_shifts = []
         localStorage.setItem("gmail", this.gmail)
         let formData = new FormData()
         let file = this.file
         await formData.append("file", file)
         await formData.append("date", this.date)
         await formData.append("user", this.user)
+        console.log("user: ", this.user)
         // await formData.append("gmail", this.gmail)
         console.log(file)
         console.log("formData: ", formData)
@@ -183,9 +204,9 @@ export default defineComponent({
             }
           );
           // ====== NOTE: this loads the schedule to Google Calendar ============= 
-          batch.then(function(){
-            console.log('all jobs done!!!')
-          });
+          // batch.then(function(){
+          //   console.log('all jobs done!!!')
+          // });
           // Object.entries(res.data).forEach(
           //   ([key, value]) => console.log(key, value)
           // );

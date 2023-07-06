@@ -103,6 +103,8 @@ month_variables = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "
 
 # wordDoc = Document(filedialog.askopenfilename( filetypes = ( (".docx .doc files", "*.docx *.doc"),("All files", "*.*") ) ))
 
+month_abbrev = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
 month_list = [
     "january", "jan",
     "february", "feb",

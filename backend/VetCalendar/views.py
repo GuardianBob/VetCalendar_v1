@@ -3,7 +3,7 @@ from rest_framework import viewsets
 from .serializers import TodoSerializer
 from .models import Todo
 from django.views.decorators.csrf import csrf_exempt
-from .scripts import convert_schedule, test_calendar, test_event
+from .scripts import convert_schedule, test_calendar, test_event, get_users
 import datetime
 # Create your views here.
 
@@ -32,6 +32,7 @@ month_list = {
 def upload_file(request):
     print (request.POST['date'])
     input_date = request.POST["date"]
+    user= request.POST["user"]
     # gmail = request.POST["gmail"][:-10]
     month = month_list[input_date[:3]]
     year = input_date[4:]
@@ -39,8 +40,14 @@ def upload_file(request):
     # print(file_name)
     # print(gmail)
     # contents = ''
-    contents = convert_schedule(file_name, month, year)
+    contents = convert_schedule(file_name, user, month, year)
     print("the contents are: ", contents) 
+    return HttpResponse(contents)
+
+@csrf_exempt 
+def return_user_list(request):
+    file_name = request.FILES['file']
+    contents = get_users(file_name)
     return HttpResponse(contents)
 
 @csrf_exempt 

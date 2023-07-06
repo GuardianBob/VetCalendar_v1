@@ -103,8 +103,32 @@ month_variables = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "
 
 # wordDoc = Document(filedialog.askopenfilename( filetypes = ( (".docx .doc files", "*.docx *.doc"),("All files", "*.*") ) ))
 
+month_list = [
+    "january", "jan",
+    "february", "feb",
+    "march", "mar",
+    "april", "apr",
+    "may",
+    "june", "jun",
+    "july", "jul",
+    "august", "aug",
+    "september", "sept",
+    "october", "oct",
+    "november", "nov",
+    "december", "dec"
+  ]
 
-def convert_schedule(schedule, month, year):
+day_list = [
+    "monday", "mon",
+    "tuesday", "tues",
+    "wednesday", "wed",
+    "thursday", "thurs",
+    "friday", "fri",
+    "saturday", "sat",
+    "sunday", "sun"
+  ]
+
+def convert_schedule(schedule, user, month, year):
   user_month = month
   user_year = year
   wordDoc = Document(schedule)
@@ -121,30 +145,7 @@ def convert_schedule(schedule, month, year):
   year = "2022"
   shifts = []
 
-  month_list = [
-    "january", "jan",
-    "february", "feb",
-    "march", "mar",
-    "april", "apr",
-    "may",
-    "june", "jun",
-    "july", "jul",
-    "august", "aug",
-    "september", "sept",
-    "october", "oct",
-    "november", "nov",
-    "december", "dec"
-  ]
-
-  day_list = [
-    "monday", "mon",
-    "tuesday", "tues",
-    "wednesday", "wed",
-    "thursday", "thurs",
-    "friday", "fri",
-    "saturday", "sat",
-    "sunday", "sun"
-  ]
+  
 
   for table in wordDoc.tables:
       date = []
@@ -176,7 +177,8 @@ def convert_schedule(schedule, month, year):
                 time = "14:00"
               if j % 6 == 5:
                 time = "18:00"
-            if "MA" in cell.text:
+            # if "MA" in cell.text:
+            if user in cell.text:
               shift_start = datetime.datetime(
                 int(user_year),
                 int(user_month),
@@ -221,6 +223,22 @@ def convert_schedule(schedule, month, year):
   return json_shifts
 
 SCOPES = ['https://www.googleapis.com/auth/calendar']
+
+def get_users(schedule):
+  wordDoc = Document(schedule) # Identify schedule as a Word Doc
+  user_list = []
+  for table in wordDoc.tables:
+    for row in table.rows:
+      row_text = ''
+      for cell in row.cells:
+        row_text = row_text + cell.text + ","
+        if cell.text.isalpha() and len(cell.text) == 2:
+          # print(f'cell: {cell.text}')
+          if cell.text not in user_list:          
+            user_list.append(cell.text)
+    print(user_list)
+    return json.dumps(user_list)
+    # return user_list
 
 
 def test_calendar():

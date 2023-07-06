@@ -180,6 +180,7 @@ def convert_schedule(schedule, user, month, year):
               if j % 6 == 5:
                 time = "18:00"
             # if "MA" in cell.text:
+            # print(user)
             if user in cell.text:
               shift_start = datetime.datetime(
                 int(user_year),
@@ -189,7 +190,7 @@ def convert_schedule(schedule, user, month, year):
                 00,
                 00
               )
-              print(shift_start)
+              # print(shift_start)
               shifts.append({
                 "shift": shift, 
                 "date": user_year + "-" + user_month + "-" + date[i], 
@@ -209,17 +210,17 @@ def convert_schedule(schedule, user, month, year):
           date = []
 
   header = ['Subject', 'Start date', 'Start time']
-  with open(f'schedule_{user_month}-{user_year}.csv', 'w', encoding='UTF8', newline='\n') as f:
-    writer = csv.writer(f)
-    writer.writerow(header)
-    for shift in shifts:
-      writer.writerow(shift)
+  # with open(f'schedule_{user_month}-{user_year}.csv', 'w', encoding='UTF8', newline='\n') as f:
+  #   writer = csv.writer(f)
+  #   writer.writerow(header)
+  #   for shift in shifts:
+  #     writer.writerow(shift)
 
-  f.close()
+  # f.close()
   # start_time = datetime.datetime(2023,6,21,3,45,00)
   # end_time = start_time + timedelta(hours=12)
   # print("start: ", start_time, "end: ", end_time)
-  print(shifts)
+  # print(shifts)
   events = add_shifts(shifts)
   json_shifts = json.dumps(events)
   return json_shifts
@@ -238,7 +239,7 @@ def get_users(schedule):
           # print(f'cell: {cell.text}')
           if cell.text not in user_list:          
             user_list.append(cell.text)
-    print(user_list)
+    # print(user_list)
     # return json.dumps(user_list)
     return user_list
 
@@ -383,7 +384,7 @@ def add_shifts(shifts):
         i += 1
         # print(event["start"])
         # events = service.events().insert(calendarId='primary', body=event).execute()
-      print("new events: ", events)
+      # print("new events: ", events)
       return events
   except HttpError as error:
     print('An error occurred: %s' % error)

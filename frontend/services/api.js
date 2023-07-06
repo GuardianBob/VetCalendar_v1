@@ -20,12 +20,12 @@ class APIService {
     console.log("uploading", formData);
     // return api.post("/upload_file", { file })
     let upload_url = ''
-    // if (process.env.DEV_ENV == "true") {
-    //   upload_url = `http://${process.env.REST_API_HOST}:${process.env.REST_API_PORT}/upload_file`
-    // } else {
-    //   upload_url = `https://${process.env.REST_API_LIVE}/upload_file`
-    // }
-    upload_url = `https://${process.env.REST_API_LIVE}/upload_file`
+    if (process.env.DEV_ENV == "true") {
+      upload_url = `http://${process.env.REST_API_HOST}:${process.env.REST_API_PORT}/upload_file`
+    } else {
+      upload_url = `https://${process.env.REST_API_LIVE}/upload_file`
+    }
+    // upload_url = `https://${process.env.REST_API_LIVE}/upload_file`
     console.log("url", upload_url);
     return axios({
       method: "post",

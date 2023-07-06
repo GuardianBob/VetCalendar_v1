@@ -40,8 +40,9 @@ def upload_file(request):
     # print(file_name)
     # print(gmail)
     # contents = ''
+    # print(user)
     contents = convert_schedule(file_name, user, month, year)
-    print("the contents are: ", contents) 
+    # print("the contents are: ", contents) 
     return HttpResponse(contents)
 
 @csrf_exempt 
@@ -50,7 +51,7 @@ def return_user_list(request):
     file_month = "false"
     for month in month_abbrev:
         if month.lower() in file_name.name.lower():
-            print(month)
+            # print(month)
             file_month = month
     users = get_users(file_name)
     # print("contents", users)

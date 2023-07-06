@@ -239,8 +239,8 @@ def get_users(schedule):
           if cell.text not in user_list:          
             user_list.append(cell.text)
     print(user_list)
-    return json.dumps(user_list)
-    # return user_list
+    # return json.dumps(user_list)
+    return user_list
 
 
 def test_calendar():

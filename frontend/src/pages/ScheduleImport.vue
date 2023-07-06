@@ -4,7 +4,7 @@
       <div class="col-10 col-sm-5 col-md-5 col-lg-5 text-center">
         <q-form 
           v-if="auth_token"
-          @submit="getShifts">
+          @submit="upload_shifts">
           <!-- <q-input filled v-model="gmail" required type="email" label="Gmail"></q-input> -->
           <q-file
           v-model="file"
@@ -36,12 +36,21 @@
           </div>
         </div>
         <q-btn
-          v-show="user"
+          :loading="disabled"
+          v-show="submit_button"
           color="primary"
           label="Add to Google Calendar"
           type="submit"
           class="q-px-lg q-mt-sm"
+          :disabled="disabled"
         />
+        <br>
+        <q-spinner
+        v-show="loading"
+        color="primary"
+        size="3em"
+        :thickness="3"
+      />
         </q-form>
       </div>
     </div>
@@ -87,7 +96,9 @@ export default defineComponent({
     }
   },
   setup() {
-
+    
+    const progress = ref(false)
+    
     return {
       // label: "Select File",
       file: ref(null),
@@ -102,7 +113,9 @@ export default defineComponent({
       user: ref(null),
       show_users: ref(false),
       user_shifts: ref([]),
-      submit_button: ref("Get Shifts"),
+      submit_button: ref(false),
+      disabled: ref(true),
+      loading: ref(false),
       // onFileSelected(file) {
       //   this.file = file
       //   console.log(file)
@@ -122,7 +135,15 @@ export default defineComponent({
     },
     user(newValue, oldValue) {
       console.log(newValue)
-      this.getShifts()
+      if (newValue != null){
+        this.loading = true
+        this.getShifts().then(() => {
+          this.submit_button = true
+          this.disabled = false
+          this.loading = false
+        })
+      }
+      
     }
   },
   computed: {
@@ -145,7 +166,6 @@ export default defineComponent({
       //   'calendarId': 'primary',
       //   'resource': event
       // });
-
       if (this.file) {
         this.user_shifts = []
         localStorage.setItem("gmail", this.gmail)
@@ -165,7 +185,7 @@ export default defineComponent({
           for (let key in res.data) {
             console.log(key, res.data[key])
           }
-          var batch = gapi.client.newBatch();
+          // var batch = gapi.client.newBatch();
           Object.entries(res.data).forEach(
             ([key, shift]) => {
               // let blah = JSON.stringify(value)
@@ -189,10 +209,10 @@ export default defineComponent({
                 },
               }
               this.user_shifts.push(new_event)
-              batch.add(gapi.client.calendar.events.insert({
-                'calendarId': 'primary',
-                'resource': new_event
-              }));
+              // batch.add(gapi.client.calendar.events.insert({
+              //   'calendarId': 'primary',
+              //   'resource': new_event
+              // }));
               // console.log(new_event)
               // const request = gapi.client.calendar.events.insert({
               //   'calendarId': 'primary',
@@ -207,6 +227,7 @@ export default defineComponent({
           // batch.then(function(){
           //   console.log('all jobs done!!!')
           // });
+
           // Object.entries(res.data).forEach(
           //   ([key, value]) => console.log(key, value)
           // );
@@ -221,23 +242,21 @@ export default defineComponent({
           // })
   
           // console.log("res: ", res.data)
-            Notify.create({
-              message: "File uploaded successfully",
-              color: "green",
-            })
-          })
+        
+        })
         .catch(err => {
-            Notify.create({
-              message: "File upload failed",
-              color: "red",
-            })
+          Notify.create({
+            message: "Something went wrong",
+            color: "red",
           })
+        })
       }
     },
 
     async get_users() {
       console.log("triggered")
       if (this.file) {
+        this.loading = true
         localStorage.setItem("gmail", this.gmail)
         let formData = new FormData()
         let file = this.file
@@ -257,8 +276,34 @@ export default defineComponent({
           }
           this.users = res.data["users"]
           this.show_users = true
+          this.loading = false
         })
       }
+    },
+
+    async upload_shifts() {
+      var batch = gapi.client.newBatch();
+      this.disabled = true
+      this.user_shifts.forEach((shift) => {
+        console.log(shift)
+        batch.add(gapi.client.calendar.events.insert({
+                'calendarId': 'primary',
+                'resource': shift
+              }));
+        // ====== NOTE: this loads the schedule to Google Calendar ============= 
+      })
+      batch.then(() => {
+        this.loading = false
+        this.submit_button = false
+        this.user = null
+        this.user_shifts = []
+        console.log('all jobs done!!!')
+        Notify.create({
+            message: "Schedule uploaded successfully",
+            color: "green",
+          })
+      });
+      // this.submit_button = false
     },
 
     async test_backend() {

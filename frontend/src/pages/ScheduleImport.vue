@@ -2,6 +2,8 @@
   <q-page class="q-pt-xl">
     <div class="row align-start justify-center">
       <div class="col-10 col-sm-5 col-md-5 col-lg-5 text-center">
+        <q-btn class="outline" id="authorize_button" @click="handleAuthClick" v-show="!auth_token">
+          <img width="20" style="margin-bottom:3px; margin-right:5px" src="~assets/Google_G_Logo.svg" alt="">Connect Google</q-btn>
         <q-form 
           v-if="auth_token"
           @submit="upload_shifts">
@@ -50,21 +52,19 @@
         color="primary"
         size="3em"
         :thickness="3"
-      />
+        />
         </q-form>
       </div>
     </div>
-    <div id="test_add">
-      <!-- <q-btn class="outline" color="primary" @click="test_API" label="test API"></q-btn> -->
-      <!-- <q-btn class="outline" color="primary" @click="test_backend" label="Test Backend"></q-btn> -->
-      <!-- <q-btn class="outline" color="primary" @click="add_to_calendar" label="Test Event"></q-btn> -->
-      
+    <div class="row align-start justify-center">
+      <div id="test_add" class="col-10 col-md-6 col-sm-8 col-lg-6 q-mx-sm text-center">
+        <FullCalendar :options='calendarOptions' />
+      </div>
     </div>
     <div id="google_API_test" class="col-10 text-center">
       <div id="my-signin2"></div>
       <!-- <q-btn class="outline" color="primary" id="authorize_button" @click="handleAuthClick" v-show="!auth_token">Authorize</q-btn> -->
-      <q-btn class="outline" id="authorize_button" @click="handleAuthClick" v-show="!auth_token">
-        <img width="20" style="margin-bottom:3px; margin-right:5px" src="~assets/Google_G_Logo.svg" alt="">Connect Google</q-btn>
+      
       <q-btn class="outline q-my-sm" id="signout_button" @click="handleSignoutClick" v-show="auth_token">Sign Out</q-btn>
       <!-- <q-btn class="outline q-my-lg" id="signout_button" @click="get_users">Get Users</q-btn> -->
 
@@ -79,6 +79,8 @@
 import { defineComponent, ref } from 'vue'
 import { useQuasar, Notify } from "quasar"
 import APIService from "../../services/api"
+import FullCalendar from '@fullcalendar/vue3'
+import dayGridPlugin from '@fullcalendar/daygrid'
 
 const quasar = useQuasar()
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID
@@ -91,6 +93,10 @@ const SCOPES = process.env.SCOPES;
 
 export default defineComponent({
   name: "FileUpload",
+  components: {
+    FullCalendar // make the <FullCalendar> tag available
+  },
+
   data() {
     return {
     }
@@ -116,6 +122,13 @@ export default defineComponent({
       submit_button: ref(false),
       disabled: ref(true),
       loading: ref(false),
+      calendarOptions: ref({
+        plugins: [dayGridPlugin],
+        initialView: 'dayGridMonth',
+        weekends: true,
+        events: [
+        ]
+      }),
       // onFileSelected(file) {
       //   this.file = file
       //   console.log(file)
@@ -181,10 +194,13 @@ export default defineComponent({
         APIService.upload_file(formData)
         .then(res => {
           
-          console.log("Add to Calendar")
-          for (let key in res.data) {
-            console.log(key, res.data[key])
-          }
+          // console.log("Add to Calendar")
+          // for (let key in res.data) {
+          //   console.log(key, res.data[key])
+          // }
+          // this.calendarOptions.events.push(
+          //   { title: 'test event', date: '2023-07-05'}
+          // )
           // var batch = gapi.client.newBatch();
           Object.entries(res.data).forEach(
             ([key, shift]) => {
@@ -209,6 +225,13 @@ export default defineComponent({
                 },
               }
               this.user_shifts.push(new_event)
+              this.calendarOptions.events.push(
+                {
+                  title: shift['summary'],
+                  start: shift["start"]["dateTime"]
+                }
+              )
+              console.log(this.calendarOptions.events)
               // batch.add(gapi.client.calendar.events.insert({
               //   'calendarId': 'primary',
               //   'resource': new_event
@@ -305,7 +328,7 @@ export default defineComponent({
       });
       // this.submit_button = false
     },
-
+    
     async test_backend() {
       APIService.test_calendar().then(res => {
         console.log("res: ", res.data)

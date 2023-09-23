@@ -3,7 +3,7 @@ from rest_framework import viewsets
 from .serializers import TodoSerializer
 from .models import Todo
 from django.views.decorators.csrf import csrf_exempt
-from .scripts import convert_schedule, test_calendar, test_event, get_users
+from .scripts import convert_schedule, test_calendar, test_event, get_users, load_schedule
 import datetime, json
 # Create your views here.
 
@@ -41,7 +41,8 @@ def upload_file(request):
     # print(gmail)
     # contents = ''
     # print(user)
-    contents = convert_schedule(file_name, user, month, year)
+    # contents = convert_schedule(file_name, user, month, year)
+    contents = load_schedule(file_name, user, month, year)
     # print("the contents are: ", contents) 
     return HttpResponse(contents)
 

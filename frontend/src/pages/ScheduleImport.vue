@@ -2,10 +2,8 @@
   <q-page class="q-pt-xl">
     <div class="row align-start justify-center">
       <div class="col-10 col-sm-5 col-md-5 col-lg-5 text-center">
-        <q-btn class="outline" id="authorize_button" @click="handleAuthClick" v-show="!auth_token">
-          <img width="20" style="margin-bottom:3px; margin-right:5px" src="~assets/Google_G_Logo.svg" alt="">Connect Google</q-btn>
-        <q-form 
-          v-if="auth_token"
+        
+        <q-form           
           @submit="upload_shifts">
           <!-- <q-input filled v-model="gmail" required type="email" label="Gmail"></q-input> -->
           <q-file
@@ -17,48 +15,51 @@
           <template v-slot:prepend>
             <q-icon name="attach_file" />
           </template>
-        </q-file>
-        <q-input filled v-model="date" label="Verify Date" v-show="file" class="q-my-sm">
-          <template v-slot:append>
-            <q-icon name="event" class="cursor-pointer">
-              <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                <q-date v-model="date" mask="MMM YYYY">
-                  <div class="row items-center justify-end">
-                    <q-btn v-close-popup label="Close" color="primary" flat />
-                  </div>
-                </q-date>
-              </q-popup-proxy>
-            </q-icon>
-          </template>
-        </q-input>
-        <q-select v-model="user" :options="users" label="Select User Initials" v-show="show_users" class="q-my-sm"/>
-        <div class="row q-py-sm">
-          <div class="col-12 text-center" v-for="(shift, index) in user_shifts" :key="index">
-            {{ splitDate(shift.start.dateTime) }} - <span class="text-weight-bold">{{ shift.summary }}</span>
+          </q-file>
+          <q-input filled v-model="date" label="Verify Date" v-show="file" class="q-my-sm">
+            <template v-slot:append>
+              <q-icon name="event" class="cursor-pointer">
+                <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                  <q-date v-model="date" mask="MMM YYYY">
+                    <div class="row items-center justify-end">
+                      <q-btn v-close-popup label="Close" color="primary" flat />
+                    </div>
+                  </q-date>
+                </q-popup-proxy>
+              </q-icon>
+            </template>
+          </q-input>
+          <q-select v-model="user" :options="users" label="Select User Initials" v-show="show_users" class="q-my-sm"/>
+          <div class="row q-py-sm">
+            <div class="col-12 text-center" v-for="(shift, index) in user_shifts" :key="index">
+              {{ splitDate(shift.start.dateTime) }} - <span class="text-weight-bold">{{ shift.summary }}</span>
+            </div>
           </div>
-        </div>
-        <q-btn
-          :loading="disabled"
-          v-show="submit_button"
+          <q-btn class="outline" id="authorize_button" @click="handleAuthClick" v-show="!auth_token">
+            <img width="20" style="margin-bottom:3px; margin-right:5px" src="~assets/Google_G_Logo.svg" alt="">Connect Google</q-btn>
+          <q-btn
+            v-if="auth_token"
+            :loading="disabled"
+            v-show="submit_button"
+            color="primary"
+            label="Add to Google Calendar"
+            type="submit"
+            class="q-px-lg q-mt-sm"
+            :disabled="disabled"
+          />
+          <br>
+          <q-spinner
+          v-show="loading"
           color="primary"
-          label="Add to Google Calendar"
-          type="submit"
-          class="q-px-lg q-mt-sm"
-          :disabled="disabled"
-        />
-        <br>
-        <q-spinner
-        v-show="loading"
-        color="primary"
-        size="3em"
-        :thickness="3"
-        />
+          size="3em"
+          :thickness="3"
+          />
         </q-form>
       </div>
     </div>
     <div class="row align-start justify-center">
       <div id="test_add" class="col-10 col-md-6 col-sm-8 col-lg-6 q-mx-sm text-center">
-        <FullCalendar :options='calendarOptions' />
+        <FullCalendar :options='calendarOptions' id="calendar" ref="myCalendar"/>
       </div>
     </div>
     <div id="google_API_test" class="col-10 text-center">
@@ -126,7 +127,11 @@ export default defineComponent({
         plugins: [dayGridPlugin],
         initialView: 'dayGridMonth',
         weekends: true,
+        initialDate: '2023-06-01',
         events: [
+          { title: "Test",
+            start: "2023-06-15",
+            end: "2023-06-15"}
         ]
       }),
       // onFileSelected(file) {
@@ -157,7 +162,11 @@ export default defineComponent({
         })
       }
       
-    }
+    },
+  //   calendarOptions(newValue, oldValue) {
+  //     console.log("new value", newValue)
+  //     this.calendarOptions.events = newValue
+  //   }
   },
   computed: {
     // code to take a string and return the first 10 characters 
@@ -206,7 +215,7 @@ export default defineComponent({
             ([key, shift]) => {
               // let blah = JSON.stringify(value)
               // console.log(blah.substring(1,blah.length-1))
-              console.log(shift["summary"], shift["start"]["dateTime"], shift["end"]["dateTime"])
+              // console.log(shift["summary"], shift["start"]["dateTime"], shift["end"]["dateTime"])
             //   gapi.client.calendar.events.insert({
             //   'calendarId': 'primary',
             //   'resource': blah.substring(1,blah.length-1)
@@ -225,13 +234,15 @@ export default defineComponent({
                 },
               }
               this.user_shifts.push(new_event)
-              this.calendarOptions.events.push(
-                {
-                  title: shift['summary'],
-                  start: shift["start"]["dateTime"]
-                }
-              )
-              console.log(this.calendarOptions.events)
+
+              
+              this.calendarOptions.events.push({
+              // FullCalendar.eventAdd({
+                "title": shift["summary"],
+                "start": shift["start"],
+                "end": shift["end"],
+              })
+              
               // batch.add(gapi.client.calendar.events.insert({
               //   'calendarId': 'primary',
               //   'resource': new_event
@@ -246,6 +257,15 @@ export default defineComponent({
               // });
             }
           );
+          this.calendarOptions.events.push({
+              // FullCalendar.eventAdd({
+                "title": "test-2",
+                "start": "2023-06-05",
+                "end": "2023-06-05",
+              })
+          // let myCalendar = $refs.myCalendar; 
+          // myCalendar.refetchEvents();
+          // console.log(this.calendarOptions.events)
           // ====== NOTE: this loads the schedule to Google Calendar ============= 
           // batch.then(function(){
           //   console.log('all jobs done!!!')
@@ -265,7 +285,7 @@ export default defineComponent({
           // })
   
           // console.log("res: ", res.data)
-        
+          // FullCalendar.refetchEvents()
         })
         .catch(err => {
           Notify.create({

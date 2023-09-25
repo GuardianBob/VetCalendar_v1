@@ -58,8 +58,8 @@
       </div>
     </div>
     <div class="row align-start justify-center">
-      <div id="test_add" class="col-10 col-md-6 col-sm-8 col-lg-6 q-mx-sm text-center">
-        <FullCalendar :options='calendarOptions' id="calendar" ref="myCalendar"/>
+      <div id="test_add" class="col-10 col-md-10 col-sm-8 col-lg-6 q-mx-sm text-center" style="max-height: fit-content;">
+        <FullCalendar :options='calendarOptions' id="calendar" ref="fullCalendar"/>
       </div>
     </div>
     <div id="google_API_test" class="col-10 text-center">
@@ -100,6 +100,20 @@ export default defineComponent({
 
   data() {
     return {
+      calendarStart: "",
+      calendarEnd: "",
+      calendarOptions: ref({
+        plugins: [dayGridPlugin],
+        initialView: 'dayGridMonth',
+        weekends: true,
+        initialDate: new Date(),
+        // datesSet: this.handleMonthChange,
+        events: [
+          { title: "Test",
+            start: "2023-06-15",
+            end: "2023-06-15"}
+        ]
+      }),
     }
   },
   setup() {
@@ -123,17 +137,7 @@ export default defineComponent({
       submit_button: ref(false),
       disabled: ref(true),
       loading: ref(false),
-      calendarOptions: ref({
-        plugins: [dayGridPlugin],
-        initialView: 'dayGridMonth',
-        weekends: true,
-        initialDate: '2023-06-01',
-        events: [
-          { title: "Test",
-            start: "2023-06-15",
-            end: "2023-06-15"}
-        ]
-      }),
+      
       // onFileSelected(file) {
       //   this.file = file
       //   console.log(file)
@@ -149,17 +153,17 @@ export default defineComponent({
     file(newValue, oldValue) {
       console.log("triggered")
       this.user = null
-      this.get_users()
+      this.get_users()      
     },
     user(newValue, oldValue) {
       console.log(newValue)
       if (newValue != null){
-        this.loading = true
-        this.getShifts().then(() => {
-          this.submit_button = true
-          this.disabled = false
-          this.loading = false
-        })
+        // this.loading = true
+        // this.getShifts().then(() => {
+        //   this.submit_button = true
+        //   this.disabled = false
+        //   this.loading = false
+        // })
       }
       
     },
@@ -183,6 +187,12 @@ export default defineComponent({
       return date_string
     },
 
+    async handleMonthChange(mycal){
+      let new_date = new Date(this.date)
+      this.calendarStart = new_date
+      this.calendarOptions.initialDate = new_date
+    },
+
     async getShifts() {
       // const request = gapi.client.calendar.events.insert({
       //   'calendarId': 'primary',
@@ -200,6 +210,7 @@ export default defineComponent({
         // await formData.append("gmail", this.gmail)
         console.log(file)
         console.log("formData: ", formData)
+        this.calendarOptions.events = []
         APIService.upload_file(formData)
         .then(res => {
           
@@ -235,12 +246,12 @@ export default defineComponent({
               }
               this.user_shifts.push(new_event)
 
-              
+              // console.log(`title: ${shift["start"]["dateTime"]}`)
               this.calendarOptions.events.push({
               // FullCalendar.eventAdd({
                 "title": shift["summary"],
-                "start": shift["start"],
-                "end": shift["end"],
+                "start": shift["start"]["dateTime"],
+                // "end": shift["end"]["dateTime"],
               })
               
               // batch.add(gapi.client.calendar.events.insert({
@@ -257,12 +268,12 @@ export default defineComponent({
               // });
             }
           );
-          this.calendarOptions.events.push({
-              // FullCalendar.eventAdd({
-                "title": "test-2",
-                "start": "2023-06-05",
-                "end": "2023-06-05",
-              })
+          // this.calendarOptions.events.push({
+          //     // FullCalendar.eventAdd({
+          //       "title": "test-2",
+          //       "start": "2023-06-05",
+          //       "end": "2023-06-05",
+          //     })
           // let myCalendar = $refs.myCalendar; 
           // myCalendar.refetchEvents();
           // console.log(this.calendarOptions.events)
@@ -297,6 +308,7 @@ export default defineComponent({
     },
 
     async get_users() {
+      let calendarApi = this.$refs.fullCalendar.getApi()
       console.log("triggered")
       if (this.file) {
         this.loading = true
@@ -315,11 +327,17 @@ export default defineComponent({
           if (res.data["month"] != "false"){
             if (!this.date.includes(res.data["month"])){
               this.date = res.data["month"] + this.date.slice(3)
+              let new_date = new Date('01 ' + res.data["month"] + this.date.slice(3))
+              console.log(new_date.toISOString())
+              calendarApi.gotoDate(new_date.toISOString())
+              calendarApi.setOption('contentHeight', 'auto')
+              calendarApi.updateSize()
             }
           }
           this.users = res.data["users"]
           this.show_users = true
           this.loading = false
+          this.getShifts()
         })
       }
     },

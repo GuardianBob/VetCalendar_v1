@@ -485,7 +485,7 @@ def add_shifts(shifts):
         # print("second half: ", shift["shift_start"][11:])
         # events = {
         events[f'shift_{i}'] = {
-          "summary": shift["shift"] + "-" + shift["user"],
+          "summary": shift["user"], # shift["shift"] + "-" + shift["user"],
           "location": "AMCS",
           "description": shift["shift"],
           "start": {

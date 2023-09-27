@@ -51,6 +51,7 @@
             class="q-px-lg q-mt-sm"
             :disabled="disabled"
           />
+          <q-btn v-if="auth_token" class="outline" id="fetch_calendars" @click="verify_calendar">Verify Calendars</q-btn>
           <br>
           <q-spinner
           v-show="loading"
@@ -169,7 +170,7 @@ export default defineComponent({
       disabled: ref(true),
       loading: ref(false),
       shifts: ref([]),
-      
+      shift_data: ref([]),      
       // onFileSelected(file) {
       //   this.file = file
       //   console.log(file)
@@ -473,6 +474,39 @@ export default defineComponent({
           this.getShifts()
         })
       }
+    },
+
+    async list_calendars() {
+      return new Promise(async (resolve, reject) => {
+        const get_calendars = gapi.client.calendar.calendarList.list()
+        console.log(get_calendars)
+        let calendars = []
+        await get_calendars.execute((cal) => {
+          console.log(cal)
+          cal.items.forEach((item) => {
+            console.log(cal)
+            calendars.push(item.summary)
+            console.log(item.summary)
+          })
+          if ( calendars.length > 0) {
+            resolve(calendars)
+          } else {
+            reject("Error!!!")
+          }
+        })
+      })
+    },
+
+    async verify_calendar() {
+      this.list_calendars().then((res) => { 
+        console.log(res[0]) 
+        if (res.includes("Birthdays")) {
+          console.log("It WORKED!!!!!")
+        }
+        res.map((cal) => { 
+          console.log(cal)
+        })
+      })
     },
 
     async upload_shifts() {

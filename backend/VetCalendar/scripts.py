@@ -89,6 +89,7 @@ import datetime
 from datetime import timedelta
 import os.path
 from .models import Calendar
+from django.utils import timezone
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -221,11 +222,13 @@ def convert_schedule(schedule, user, month, year):
   # end_time = start_time + timedelta(hours=12)
   # print("start: ", start_time, "end: ", end_time)
   # print(shifts)
+  
   events = add_shifts(shifts)
   json_shifts = json.dumps(events)
   return json_shifts
 
-def load_schedule(schedule, user, month, year):
+def load_schedule(schedule, month, year):
+  print(f'year start: {year}')
   user_month = month
   user_year = year
   wordDoc = Document(schedule)
@@ -239,7 +242,7 @@ def load_schedule(schedule, user, month, year):
   # wordDoc = Document('SEP21_schedule.docx')
   # wordDoc = Document('Aug 2022(CORRECT).docx')
   month = user_month
-  year = "2022"
+  # year = "2022"
   shifts = []
   for table in wordDoc.tables:
       date = []
@@ -285,7 +288,7 @@ def load_schedule(schedule, user, month, year):
                   00
                 )
                 # print(shift_start)
-                print(f'user: {cell_user}')
+                # print(f'user: {cell_user}')
                 shifts.append({
                   "user": cell_user,
                   "shift": shift, 
@@ -307,7 +310,7 @@ def load_schedule(schedule, user, month, year):
         if j % 6 == 0: 
           date = []
 
-  header = ['Subject', 'Start date', 'Start time']
+  # header = ['Subject', 'Start date', 'Start time']
   # with open(f'schedule_{user_month}-{user_year}.csv', 'w', encoding='UTF8', newline='\n') as f:
   #   writer = csv.writer(f)
   #   writer.writerow(header)
@@ -319,18 +322,19 @@ def load_schedule(schedule, user, month, year):
   # end_time = start_time + timedelta(hours=12)
   # print("start: ", start_time, "end: ", end_time)
   # print(shifts)
-  # load_database(shifts, month, year)
-  events = add_shifts(shifts)
-  json_shifts = json.dumps(events)
-  return json_shifts
+  load_database(shifts, user_month, user_year)
+  # events = add_shifts(shifts)
+  # json_shifts = json.dumps(events)
+  return "Success!"
 
 def load_database(shifts, month, year):
   try:
+    print(month, year)
     Calendar.objects.filter(month=month, year=year).delete()
     i = 0
     for shift in shifts:
       calendar_shift = Calendar.objects.create(
-        user_initials = shift["user"],
+        user_initials = shift["user"].strip(),
         start = shift["shift_start"],
         end = shift["shift_end"],
         month = month,

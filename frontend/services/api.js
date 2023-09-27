@@ -35,6 +35,10 @@ class APIService {
     })
   }
 
+  return_shifts(date) {
+    return api.post('/return_shifts', {date})
+  }
+
   test_calendar() {
     return api.post('/calendar/test');
   }

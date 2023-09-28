@@ -307,6 +307,7 @@ export default defineComponent({
           // 
         }
       })
+      console.log(this.shifts)
       calendarApi.updateSize()
     },
 
@@ -484,7 +485,7 @@ export default defineComponent({
         await get_calendars.execute((cal) => {
           console.log(cal)
           cal.items.forEach((item) => {
-            console.log(cal)
+            console.log(item)
             calendars.push(item.summary)
             console.log(item.summary)
           })
@@ -497,15 +498,43 @@ export default defineComponent({
       })
     },
 
+    async insert_calendar(calendar) {
+      return new Promise(async (resolve, reject) => {
+        const insert_calendar = gapi.client.calendar.calendars.insert(calendar);
+        console.log(insert_calendar)
+        await insert_calendar.execute((res) => {
+          console.log(res)
+          if (!res.error) {
+            resolve(true)
+          } else {
+            reject(false)
+          }
+        })
+      })
+    },
+
     async verify_calendar() {
       this.list_calendars().then((res) => { 
         console.log(res[0]) 
-        if (res.includes("Birthdays")) {
+        if (res.includes("AMCS")) {
           console.log("It WORKED!!!!!")
+        } else {
+          console.log("NERP! Calendar doesn't exist")
+          let new_calendar = {
+            // id: 'amcsschedule@group.calendar.google.com', // Trying to create the ID causes 400 error
+            summary: 'AMCS'
+          }
+          this.insert_calendar(new_calendar).then((res) => {
+            console.log("res: ", res.data)
+              Notify.create({
+                message: "Successfully created calendar!",
+                color: "green",
+              })
+          })
         }
-        res.map((cal) => { 
-          console.log(cal)
-        })
+        // res.map((cal) => { 
+        //   console.log(cal)
+        // })
       })
     },
 

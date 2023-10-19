@@ -170,7 +170,8 @@ export default defineComponent({
       disabled: ref(true),
       loading: ref(false),
       shifts: ref([]),
-      shift_data: ref([]),      
+      shift_data: ref([]),     
+      calendar_id: ref([]),
       // onFileSelected(file) {
       //   this.file = file
       //   console.log(file)
@@ -481,15 +482,17 @@ export default defineComponent({
       return new Promise(async (resolve, reject) => {
         const get_calendars = gapi.client.calendar.calendarList.list()
         console.log(get_calendars)
-        let calendars = []
+        let calendars = {}
         await get_calendars.execute((cal) => {
           console.log(cal)
           cal.items.forEach((item) => {
             console.log(item)
-            calendars.push(item.summary)
+            // calendars.push(item.summary)
+            calendars[item.id] = item.summary
             console.log(item.summary)
           })
-          if ( calendars.length > 0) {
+          console.log(calendars)
+          if (Object.keys(calendars).length > 0) {
             resolve(calendars)
           } else {
             reject("Error!!!")
@@ -516,22 +519,30 @@ export default defineComponent({
     async verify_calendar() {
       this.list_calendars().then((res) => { 
         console.log(res[0]) 
-        if (res.includes("AMCS")) {
-          console.log("It WORKED!!!!!")
-        } else {
-          console.log("NERP! Calendar doesn't exist")
-          let new_calendar = {
-            // id: 'amcsschedule@group.calendar.google.com', // Trying to create the ID causes 400 error
-            summary: 'AMCS'
+        // if (res.includes("AMCS")) {
+        //   console.log("It WORKED!!!!!")
+        Object.entries(res).forEach(([key, value]) => {
+          console.log(key , value); // key ,value
+          if (value.includes("AMCS")) {
+            this.calendar_id = key
+            console.log(`calendar id: ${this.calendar_id}`)
+          } else {
+            console.log("NERP! Calendar doesn't exist")
+            let new_calendar = {
+              // id: 'amcsschedule@group.calendar.google.com', // Trying to create the ID causes 400 error
+              summary: 'AMCS'
+            }
+            this.insert_calendar(new_calendar).then((res) => {
+              console.log("res: ", res.data)
+              // this.verify_calendar();
+                Notify.create({
+                  message: "Successfully created calendar!",
+                  color: "green",
+                })
+            })
           }
-          this.insert_calendar(new_calendar).then((res) => {
-            console.log("res: ", res.data)
-              Notify.create({
-                message: "Successfully created calendar!",
-                color: "green",
-              })
-          })
-        }
+        });
+        console.log(`calendar id: ${this.calendar_id}`)
         // res.map((cal) => { 
         //   console.log(cal)
         // })
@@ -539,6 +550,30 @@ export default defineComponent({
     },
 
     async upload_shifts() {
+      var batch = gapi.client.newBatch();
+      this.disabled = true
+      this.user_shifts.forEach((shift) => {
+        console.log(shift)
+        batch.add(gapi.client.calendar.events.insert({
+                'calendarId': 'primary',
+                'resource': shift
+              }));
+        // ====== NOTE: this loads the schedule to Google Calendar ============= 
+      })
+      batch.then(() => {
+        this.loading = false
+        this.submit_button = false
+        this.user = null
+        this.user_shifts = []
+        console.log('all jobs done!!!')
+        Notify.create({
+            message: "Schedule uploaded successfully",
+            color: "green",
+          })
+      });
+    },
+
+    async upload_shifts_old() {
       var batch = gapi.client.newBatch();
       this.disabled = true
       this.user_shifts.forEach((shift) => {

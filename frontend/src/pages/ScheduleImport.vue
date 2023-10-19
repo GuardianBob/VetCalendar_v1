@@ -506,7 +506,8 @@ export default defineComponent({
         const insert_calendar = gapi.client.calendar.calendars.insert(calendar);
         console.log(insert_calendar)
         await insert_calendar.execute((res) => {
-          console.log(res)
+          console.log(res, res.id, res.summary)
+          this.calendar_id = res.id
           if (!res.error) {
             resolve(true)
           } else {
@@ -523,25 +524,31 @@ export default defineComponent({
         //   console.log("It WORKED!!!!!")
         Object.entries(res).forEach(([key, value]) => {
           console.log(key , value); // key ,value
-          if (value.includes("AMCS")) {
+          if (value.includes("AMCS Schedule")) {
             this.calendar_id = key
             console.log(`calendar id: ${this.calendar_id}`)
-          } else {
-            console.log("NERP! Calendar doesn't exist")
-            let new_calendar = {
-              // id: 'amcsschedule@group.calendar.google.com', // Trying to create the ID causes 400 error
-              summary: 'AMCS'
-            }
-            this.insert_calendar(new_calendar).then((res) => {
-              console.log("res: ", res.data)
-              // this.verify_calendar();
-                Notify.create({
-                  message: "Successfully created calendar!",
-                  color: "green",
-                })
-            })
-          }
+          } // else {
+          //   console.log("NERP! Calendar doesn't exist")
+          //   
+          // }
         });
+        if (this.calendar_id.length > 0){
+          console.log("we found a calendar!")
+        } else {
+          console.log("no calendar!")
+          let new_calendar = {
+            // id: 'amcsschedule@group.calendar.google.com', // Trying to create the ID causes 400 error
+            summary: 'AMCS Schedule'
+          }
+          this.insert_calendar(new_calendar).then((res) => {
+            console.log("res: ", res.data)
+            // this.verify_calendar();
+              Notify.create({
+                message: "Successfully created calendar!",
+                color: "green",
+              })
+          })
+        }
         console.log(`calendar id: ${this.calendar_id}`)
         // res.map((cal) => { 
         //   console.log(cal)

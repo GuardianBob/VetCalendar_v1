@@ -52,8 +52,8 @@
             :disabled="disabled"
           />
           <q-btn v-if="auth_token" class="outline" id="fetch_calendars" @click="verify_calendar">Verify Calendars</q-btn>
-          <!-- <q-btn v-if="show_add2Cal" class="outline" id="fetch_calendars" @click="upload_shifts_v2">Sync to Google Calendar</q-btn> -->
-          <q-btn class="outline" id="fetch_calendars" @click="get_calendar_events">Get Events</q-btn>
+          <q-btn v-if="show_add2Cal" class="outline" id="fetch_calendars" @click="upload_shifts_v2">Add Google Events</q-btn>
+          <q-btn class="outline" id="fetch_calendars" @click="clear_google_events">Clear Google Events</q-btn>
           <br>
           <q-spinner
           v-show="loading"
@@ -561,16 +561,20 @@ export default defineComponent({
       })
     },
 
-    async get_calendar_events() {
+    async get_google_events() {
       return new Promise(async (resolve, reject) => {
         if (!this.calendar_id.length > 0) {
+          // Need to fix so function waits for this to finish before trying to continue
           await this.verify_calendar()
         }
         console.log(this.date)
         let date_start = new Date(`01 ${this.date}`)
-        let date_end = new Date(date_start.getFullYear(), date_start.getMonth()+1, 0)
-        date_start = date_start.toISOString().slice(0,-5) + "Z"
-        date_end = date_end.toISOString().slice(0,-5) + "Z"
+        let date_end = new Date(date_start.getFullYear(), date_start.getMonth()+1, 0, 23, 59)
+        let tz_offset =  (new Date()).getTimezoneOffset() * 60000
+        date_start = new Date(date_start - tz_offset).toISOString().slice(0,-5) + "Z"
+        date_end = new Date(date_end - tz_offset).toISOString().slice(0,-5) + "Z"
+        // date_start = date_start.toISOString().slice(0,-5) + "Z"
+        // date_end = date_end.toISOString().slice(0,-5) + "Z"
         console.log(date_start)
         console.log(date_end)
         let params = {
@@ -597,6 +601,28 @@ export default defineComponent({
           }
         })
       })
+    },
+
+    async clear_google_events() {
+      this.get_google_events().then((res) => {
+        console.log(res)
+        if (res.length > 0) {
+          var batch = gapi.client.newBatch();
+          res.forEach((event) => {
+            batch.add(gapi.client.calendar.events.delete({
+              'calendarId': this.calendar_id,
+              'eventId': event
+            }));
+          })
+          batch.then(() => {
+            console.log('all jobs done!!!')
+            Notify.create({
+              message: "Schedule successfully cleared",
+              color: "green",
+            })
+          })
+        }
+      });
     },
 
     async upload_shifts_v2() {

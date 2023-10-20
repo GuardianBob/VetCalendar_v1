@@ -52,7 +52,8 @@
             :disabled="disabled"
           />
           <q-btn v-if="auth_token" class="outline" id="fetch_calendars" @click="verify_calendar">Verify Calendars</q-btn>
-          <q-btn v-if="show_add2Cal" class="outline" id="fetch_calendars" @click="upload_shifts_v2">Sync to Google Calendar</q-btn>
+          <!-- <q-btn v-if="show_add2Cal" class="outline" id="fetch_calendars" @click="upload_shifts_v2">Sync to Google Calendar</q-btn> -->
+          <q-btn class="outline" id="fetch_calendars" @click="get_calendar_events">Get Events</q-btn>
           <br>
           <q-spinner
           v-show="loading"
@@ -557,6 +558,44 @@ export default defineComponent({
         // res.map((cal) => { 
         //   console.log(cal)
         // })
+      })
+    },
+
+    async get_calendar_events() {
+      return new Promise(async (resolve, reject) => {
+        if (!this.calendar_id.length > 0) {
+          await this.verify_calendar()
+        }
+        console.log(this.date)
+        let date_start = new Date(`01 ${this.date}`)
+        let date_end = new Date(date_start.getFullYear(), date_start.getMonth()+1, 0)
+        date_start = date_start.toISOString().slice(0,-5) + "Z"
+        date_end = date_end.toISOString().slice(0,-5) + "Z"
+        console.log(date_start)
+        console.log(date_end)
+        let params = {
+          'calendarId': this.calendar_id,  
+          'timeMin': date_start,
+          'timeMax': date_end,
+        }
+        const get_events = gapi.client.calendar.events.list(params)
+        console.log(get_events)
+        let events = []
+        await get_events.execute((event) => {
+          // console.log(cal)
+          event.items.forEach((item) => {
+            // console.log(item)
+            // events.push(item.id)
+            events.push(item.id)
+            // console.log(item.summary)
+          })
+          console.log(events)
+          if (events.length > 0) {
+            resolve(events)
+          } else {
+            reject("Error!!!")
+          }
+        })
       })
     },
 

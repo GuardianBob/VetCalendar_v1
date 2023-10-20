@@ -15,6 +15,7 @@ if (process.env.DEV_ENV == "true") {
 }
 const api = axios.create({
   // baseURL: 'https://api.example.com'
+  // withCredentials: false,
   baseURL: HTTP,
   // baseURL: 'https://vet-cal.jmeyer-dev.com/backend',
   headers: {

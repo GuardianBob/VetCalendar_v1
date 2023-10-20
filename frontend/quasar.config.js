@@ -91,6 +91,10 @@ module.exports = configure(function (/* ctx */) {
       // https: true
       open: false, // opens browser window automatically
       host: "0.0.0.0",
+      // server: {
+      //   type: 'http'
+      // },
+      // port: process.env.APP_PORT,
       proxy: 'http://127.0.0.1:8000',
       // proxy: 'http://jbearlocal.com:8000'
     },

@@ -11,9 +11,14 @@
           label="Select File"
           accept=".docx, .doc"
           class="q-my-sm"
+          counter
           >
+          <!-- <q-btn class="q-ml-md q-px-sm" color="primary" size="md" flat rounded id="clear_filters_button" @click="clearFile" icon="cancel"/> -->
           <template v-slot:prepend>
             <q-icon name="attach_file" />
+          </template>
+          <template v-slot:append>
+            <q-icon name="cancel" color="primary" v-if="file !== null" @click="file = null" class="cursor-pointer" />
           </template>
           </q-file>
           <q-input filled v-model="date" label="Verify Date" class="q-my-sm">
@@ -29,11 +34,11 @@
               </q-icon>
             </template>
           </q-input>
+          <q-btn class="q-my-sm q-px-xl" color="primary" outline id="upload_button" @click="file_upload" v-show="file">Upload File</q-btn>
           <div class="row justify-center">
             <q-select v-model="user" :options="users" label="Select User Initials" class="q-my-sm col-8" @update:model-value="filterShifts()"/>
-            <q-btn class="q-ml-md q-px-sm" color="primary" size="md" flat rounded id="clear_filters_button" @click="clearFilters" icon="cancel"/>
+            <q-btn v-if="user !== null" class="q-ml-md q-px-sm" color="primary" size="md" flat rounded id="clear_filters_button" @click="clearFilters" icon="cancel"/>
           </div>
-          <q-btn class="q-my-sm q-px-xl" color="primary" outline id="upload_button" @click="file_upload" v-show="file">Upload File</q-btn>
           <div class="row q-py-sm">
             <div class="col-12 text-center" v-for="(shift, index) in user_shifts" :key="index">
               {{ splitDate(shift.start.dateTime) }} - <span class="text-weight-bold">{{ shift.summary }}</span>
@@ -53,7 +58,7 @@
           />
           <q-btn v-if="auth_token" class="outline" id="fetch_calendars" @click="verify_calendar">Verify Calendars</q-btn>
           <q-btn v-if="show_add2Cal" class="outline" id="fetch_calendars" @click="upload_shifts_v2">Add Google Events</q-btn>
-          <q-btn class="outline" id="fetch_calendars" @click="clear_google_events">Clear Google Events</q-btn>
+          <q-btn v-if="show_add2Cal" class="outline" id="fetch_calendars" @click="clear_google_events">Clear Google Events</q-btn>
           <br>
           <q-spinner
           v-show="loading"
@@ -188,24 +193,26 @@ export default defineComponent({
   },
   watch: {
     file(newValue, oldValue) {
-      console.log("triggered")
-      let new_month = ""
-      let new_year = parseInt(this.date.slice(-4))
-      let file_name = newValue["name"].toLowerCase()
-      console.log(file_name)
-      month_abbrev.forEach((month) => {
-        if (file_name.includes(month.toLowerCase())) {
-          console.log(month)
-          new_month = month
-        }        
-      })      
-      if (file_name.includes(new_year + 1)) {
-        new_year = (new_year + 1).toString()
+      if (newValue != null) {
+        console.log("triggered")
+        let new_month = ""
+        let new_year = parseInt(this.date.slice(-4))
+        let file_name = newValue["name"].toLowerCase()
+        console.log(file_name)
+        month_abbrev.forEach((month) => {
+          if (file_name.includes(month.toLowerCase())) {
+            console.log(month)
+            new_month = month
+          }        
+        })      
+        if (file_name.includes(new_year + 1)) {
+          new_year = (new_year + 1).toString()
+        }
+        this.date = new_month + " " + new_year.toString()
+        console.log(new_year)
+        this.user = null
+        // this.get_users()      
       }
-      this.date = new_month + " " + new_year.toString()
-      console.log(new_year)
-      this.user = null
-      // this.get_users()      
     },
     date(newValue, oldValue) {
       // console.log(newValue, oldValue)
@@ -330,6 +337,10 @@ export default defineComponent({
       this.calendarOptions.events = this.shifts
       // console.log(this.shifts.length)
       this.user = null
+    },
+
+    async clearFile() {
+      this.file = null
     },
 
     async getShifts2() {

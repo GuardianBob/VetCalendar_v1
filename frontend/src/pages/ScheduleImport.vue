@@ -4,7 +4,7 @@
       <div class="col-10 col-sm-5 col-md-5 col-lg-5 text-center">
         
         <q-form           
-          @submit="upload_shifts">
+          @submit="upload_shifts_v2">
           <!-- <q-input filled v-model="gmail" required type="email" label="Gmail"></q-input> -->
           <q-file
           v-model="file"
@@ -52,6 +52,7 @@
             :disabled="disabled"
           />
           <q-btn v-if="auth_token" class="outline" id="fetch_calendars" @click="verify_calendar">Verify Calendars</q-btn>
+          <q-btn v-if="show_add2Cal" class="outline" id="fetch_calendars" @click="upload_shifts_v2">Sync to Google Calendar</q-btn>
           <br>
           <q-spinner
           v-show="loading"
@@ -172,6 +173,7 @@ export default defineComponent({
       shifts: ref([]),
       shift_data: ref([]),     
       calendar_id: ref([]),
+      show_add2Cal: ref(false),
       // onFileSelected(file) {
       //   this.file = file
       //   console.log(file)
@@ -501,7 +503,7 @@ export default defineComponent({
       })
     },
 
-    async insert_calendar(calendar) {
+    async add_calendar(calendar) {
       return new Promise(async (resolve, reject) => {
         const insert_calendar = gapi.client.calendar.calendars.insert(calendar);
         console.log(insert_calendar)
@@ -534,15 +536,17 @@ export default defineComponent({
         });
         if (this.calendar_id.length > 0){
           console.log("we found a calendar!")
+          this.show_add2Cal = true;
         } else {
           console.log("no calendar!")
           let new_calendar = {
             // id: 'amcsschedule@group.calendar.google.com', // Trying to create the ID causes 400 error
             summary: 'AMCS Schedule'
           }
-          this.insert_calendar(new_calendar).then((res) => {
-            console.log("res: ", res.data)
+          this.add_calendar(new_calendar).then((res) => {
+            console.log("res: ", res)
             // this.verify_calendar();
+            this.show_add2Cal = true;
               Notify.create({
                 message: "Successfully created calendar!",
                 color: "green",
@@ -554,6 +558,55 @@ export default defineComponent({
         //   console.log(cal)
         // })
       })
+    },
+
+    async upload_shifts_v2() {
+      if (this.calendar_id.length > 0) {
+        if (this.user != null) {
+          var batch = gapi.client.newBatch();
+          this.disabled = true
+          console.log(this.user)
+          this.calendarOptions.events.forEach((event) => {
+            let shift_start = event.start.replace(/ /g, 'T')
+            console.log(event.title, shift_start)
+            let shift = {
+              "summary": event.title,
+              "start": {
+                "dateTime": shift_start,
+                "timeZone": "UTC"
+              },
+              "end": {
+                "dateTime": shift_start,
+                "timeZone": "UTC"
+              },
+            }
+            batch.add(gapi.client.calendar.events.insert({
+              'calendarId': this.calendar_id,
+              'resource': shift
+            }));
+          })
+            // ====== NOTE: this loads the schedule to Google Calendar ============= 
+          // console.log(batch)
+          batch.then(() => {
+            this.loading = false
+            this.submit_button = false
+            this.user = null
+            // this.user_shifts = []
+            console.log('all jobs done!!!')
+            Notify.create({
+                message: "Schedule uploaded successfully",
+                color: "green",
+              })
+          });
+        } else {
+          Notify.create({
+            message: "Please select which user to sync.",
+            color: "red",
+            position: "center"
+          })
+        }
+        
+      }
     },
 
     async upload_shifts() {

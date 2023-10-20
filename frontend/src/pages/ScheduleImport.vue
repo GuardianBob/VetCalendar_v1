@@ -2,8 +2,8 @@
   <q-page class="q-pt-xl">
     <div class="row align-start justify-center">
       <div class="col-10 col-sm-5 col-md-5 col-lg-5 text-center">
-        <q-form 
-          v-if="auth_token"
+        
+        <q-form           
           @submit="upload_shifts">
           <!-- <q-input filled v-model="gmail" required type="email" label="Gmail"></q-input> -->
           <q-file
@@ -15,56 +15,61 @@
           <template v-slot:prepend>
             <q-icon name="attach_file" />
           </template>
-        </q-file>
-        <q-input filled v-model="date" label="Verify Date" v-show="file" class="q-my-sm">
-          <template v-slot:append>
-            <q-icon name="event" class="cursor-pointer">
-              <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                <q-date v-model="date" mask="MMM YYYY">
-                  <div class="row items-center justify-end">
-                    <q-btn v-close-popup label="Close" color="primary" flat />
-                  </div>
-                </q-date>
-              </q-popup-proxy>
-            </q-icon>
-          </template>
-        </q-input>
-        <q-select v-model="user" :options="users" label="Select User Initials" v-show="show_users" class="q-my-sm"/>
-        <div class="row q-py-sm">
-          <div class="col-12 text-center" v-for="(shift, index) in user_shifts" :key="index">
-            {{ splitDate(shift.start.dateTime) }} - <span class="text-weight-bold">{{ shift.summary }}</span>
+          </q-file>
+          <q-input filled v-model="date" label="Verify Date" class="q-my-sm">
+            <template v-slot:append>
+              <q-icon name="event" class="cursor-pointer">
+                <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                  <q-date v-model="date" mask="MMM YYYY">
+                    <div class="row items-center justify-end">
+                      <q-btn v-close-popup label="Close" color="primary" flat />
+                    </div>
+                  </q-date>
+                </q-popup-proxy>
+              </q-icon>
+            </template>
+          </q-input>
+          <div class="row justify-center">
+            <q-select v-model="user" :options="users" label="Select User Initials" class="q-my-sm col-8" @update:model-value="filterShifts()"/>
+            <q-btn class="q-ml-md q-px-sm" color="primary" size="md" flat rounded id="clear_filters_button" @click="clearFilters" icon="cancel"/>
           </div>
-        </div>
-        <q-btn
-          :loading="disabled"
-          v-show="submit_button"
+          <q-btn class="q-my-sm q-px-xl" color="primary" outline id="upload_button" @click="file_upload" v-show="file">Upload File</q-btn>
+          <div class="row q-py-sm">
+            <div class="col-12 text-center" v-for="(shift, index) in user_shifts" :key="index">
+              {{ splitDate(shift.start.dateTime) }} - <span class="text-weight-bold">{{ shift.summary }}</span>
+            </div>
+          </div>
+          <q-btn class="outline" id="authorize_button" @click="handleAuthClick" v-show="!auth_token">
+            <img width="20" style="margin-bottom:3px; margin-right:5px" src="~assets/Google_G_Logo.svg" alt="">Connect Google</q-btn>
+          <q-btn
+            v-if="auth_token"
+            :loading="disabled"
+            v-show="submit_button"
+            color="primary"
+            label="Add to Google Calendar"
+            type="submit"
+            class="q-px-lg q-mt-sm"
+            :disabled="disabled"
+          />
+          <br>
+          <q-spinner
+          v-show="loading"
           color="primary"
-          label="Add to Google Calendar"
-          type="submit"
-          class="q-px-lg q-mt-sm"
-          :disabled="disabled"
-        />
-        <br>
-        <q-spinner
-        v-show="loading"
-        color="primary"
-        size="3em"
-        :thickness="3"
-      />
+          size="3em"
+          :thickness="3"
+          />
         </q-form>
       </div>
     </div>
-    <div id="test_add">
-      <!-- <q-btn class="outline" color="primary" @click="test_API" label="test API"></q-btn> -->
-      <!-- <q-btn class="outline" color="primary" @click="test_backend" label="Test Backend"></q-btn> -->
-      <!-- <q-btn class="outline" color="primary" @click="add_to_calendar" label="Test Event"></q-btn> -->
-      
+    <div class="row align-start justify-center">
+      <div id="test_add" class="col-10 col-md-10 col-sm-8 col-lg-6 col-xs-12 q-mx-sm text-center" style="max-height: fit-content;">
+        <FullCalendar id="fullCalendar" ref="fullCalendar" :custom-buttons="customButtons" :options='calendarOptions'/>
+      </div>
     </div>
     <div id="google_API_test" class="col-10 text-center">
       <div id="my-signin2"></div>
       <!-- <q-btn class="outline" color="primary" id="authorize_button" @click="handleAuthClick" v-show="!auth_token">Authorize</q-btn> -->
-      <q-btn class="outline" id="authorize_button" @click="handleAuthClick" v-show="!auth_token">
-        <img width="20" style="margin-bottom:3px; margin-right:5px" src="~assets/Google_G_Logo.svg" alt="">Connect Google</q-btn>
+      
       <q-btn class="outline q-my-sm" id="signout_button" @click="handleSignoutClick" v-show="auth_token">Sign Out</q-btn>
       <!-- <q-btn class="outline q-my-lg" id="signout_button" @click="get_users">Get Users</q-btn> -->
 
@@ -79,6 +84,8 @@
 import { defineComponent, ref } from 'vue'
 import { useQuasar, Notify } from "quasar"
 import APIService from "../../services/api"
+import FullCalendar from '@fullcalendar/vue3'
+import dayGridPlugin from '@fullcalendar/daygrid'
 
 const quasar = useQuasar()
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID
@@ -89,10 +96,55 @@ const DISCOVERY_DOC = process.env.DISCOVERY_DOC;
 // included, separated by spaces.
 const SCOPES = process.env.SCOPES;
 
+const month_abbrev = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
 export default defineComponent({
   name: "FileUpload",
+  components: {
+    FullCalendar // make the <FullCalendar> tag available
+  },
+
   data() {
     return {
+      calendarOptions: ref({
+        customButtons: ref({
+          prev: {
+            text: "PREV",
+            click: () => {
+              let calendarApi = this.$refs.fullCalendar.getApi();
+              calendarApi.prev();
+              // console.log("eventPrev", calendarApi.getDate());
+              this.handleCalendarChange(calendarApi.getDate().toString())
+            }
+          },
+          next: { // this overrides the next button
+            text: "NEXT",
+            click: () => {
+                // console.log("eventNext");
+                let calendarApi = this.$refs.fullCalendar.getApi();
+                calendarApi.next();
+                this.handleCalendarChange(calendarApi.getDate().toString())
+            }
+          },
+          today: { // this overrides the next button
+            text: "Today",
+            click: () => {
+                // console.log("eventNext");
+                let calendarApi = this.$refs.fullCalendar.getApi();
+                calendarApi.today();
+                this.handleCalendarChange(calendarApi.getDate().toString())
+            }
+          },
+        }),
+        plugins: [dayGridPlugin],
+        initialView: 'dayGridMonth',
+        weekends: true,
+        initialDate: new Date(),
+        height: "auto",
+        events: [
+          { }
+        ]
+      }),
     }
   },
   setup() {
@@ -102,7 +154,7 @@ export default defineComponent({
     return {
       // label: "Select File",
       file: ref(null),
-      date: ref('null'),
+      date: ref(new Date().toLocaleString('en-US', { month: 'short', year: 'numeric' })),
       calendar_button: ref(false),
       tokenClient: null,
       gapiInited: false,
@@ -116,6 +168,8 @@ export default defineComponent({
       submit_button: ref(false),
       disabled: ref(true),
       loading: ref(false),
+      shifts: ref([]),
+      
       // onFileSelected(file) {
       //   this.file = file
       //   console.log(file)
@@ -130,21 +184,44 @@ export default defineComponent({
   watch: {
     file(newValue, oldValue) {
       console.log("triggered")
-      this.user = null
-      this.get_users()
-    },
-    user(newValue, oldValue) {
-      console.log(newValue)
-      if (newValue != null){
-        this.loading = true
-        this.getShifts().then(() => {
-          this.submit_button = true
-          this.disabled = false
-          this.loading = false
-        })
+      let new_month = ""
+      let new_year = parseInt(this.date.slice(-4))
+      let file_name = newValue["name"].toLowerCase()
+      console.log(file_name)
+      month_abbrev.forEach((month) => {
+        if (file_name.includes(month.toLowerCase())) {
+          console.log(month)
+          new_month = month
+        }        
+      })      
+      if (file_name.includes(new_year + 1)) {
+        new_year = (new_year + 1).toString()
       }
+      this.date = new_month + " " + new_year.toString()
+      console.log(new_year)
+      this.user = null
+      // this.get_users()      
+    },
+    date(newValue, oldValue) {
+      // console.log(newValue, oldValue)
+      this.handleMonthChange()
+    },
+    // user(newValue, oldValue) {
+    //   console.log(newValue)
+    //   if (newValue != null){
+    //     // this.loading = true
+    //     // this.getShifts().then(() => {
+    //     //   this.submit_button = true
+    //     //   this.disabled = false
+    //     //   this.loading = false
+    //     // })
+    //   }
       
-    }
+    // },
+  //   calendarOptions(newValue, oldValue) {
+  //     console.log("new value", newValue)
+  //     this.calendarOptions.events = newValue
+  //   }
   },
   computed: {
     // code to take a string and return the first 10 characters 
@@ -161,7 +238,95 @@ export default defineComponent({
       return date_string
     },
 
+    async handleMonthChange(){
+      let calendarApi = this.$refs.fullCalendar.getApi()
+      let new_date = new Date('01 ' + this.date)
+      // console.log(new_date.toISOString())
+      calendarApi.gotoDate(new_date.toISOString())
+      // console.log(this.date)
+      // console.log(calendarApi.view.activeStart) // Get the first visible day of the Calendar
+      // console.log(calendarApi.view.activeEnd)  // get the last visible day of the Calendar
+      await this.getShifts()
+      if (this.user) {
+        this.filterShifts()
+      }
+      // console.log(this.calendarOptions.events.length)
+    },
+
+    async handleCalendarChange(cal_date){
+      let new_date = cal_date.slice(4, 7) + " " + cal_date.slice(11, 15)
+      // console.log(new_date)
+      this.date = new_date
+      // let body = {}
+      // body["date"] = this.date      
+      // APIService.return_shifts(this.date)
+    },
+
+    async file_upload(){
+      console.log("and for ALL the marbles...!")
+      if (this.file) {
+        this.user_shifts = []
+        localStorage.setItem("gmail", this.gmail)
+        let formData = new FormData()
+        let file = this.file
+        await formData.append("file", file)
+        await formData.append("date", this.date)
+        await APIService.upload_file(formData)
+        this.getShifts()
+      }
+    },
+
     async getShifts() {
+      let calendarApi = this.$refs.fullCalendar.getApi()
+      let start = calendarApi.view.activeStart
+      let end = calendarApi.view.activeEnd
+      await APIService.return_shifts({"start": start, "end": end})
+      .then(res => {
+        // console.log(res.data)
+        if (res.data != "No Shifts"){
+          this.calendarOptions.events = []
+          this.shifts = []
+          // console.log(events)
+          this.users = res.data.users
+          res.data.shifts.map(event => { 
+            // console.log(event)
+            this.calendarOptions.events.push({
+              // Add event to displayed calendar
+              "title": event["user"],
+              "start": event["start"],
+              // "end": shift["end"]["dateTime"],
+            })
+            this.shifts.push({
+              // Add event to displayed calendar
+              "title": event["user"],
+              "start": event["start"],
+              // "end": shift["end"]["dateTime"],
+            })
+          })
+          // 
+        }
+      })
+      calendarApi.updateSize()
+    },
+
+    async filterShifts() {
+      // console.log(this.user)
+      this.calendarOptions.events = []
+      this.shifts.map(shift => {
+        if (shift["title"] == this.user){
+          // console.log("matches")
+          this.calendarOptions.events.push(shift)
+        }
+      })
+    },
+
+    async clearFilters() {
+      this.calendarOptions.events = this.shifts
+      // console.log(this.shifts.length)
+      this.user = null
+    },
+
+    async getShifts2() {
       // const request = gapi.client.calendar.events.insert({
       //   'calendarId': 'primary',
       //   'resource': event
@@ -173,42 +338,55 @@ export default defineComponent({
         let file = this.file
         await formData.append("file", file)
         await formData.append("date", this.date)
-        await formData.append("user", this.user)
-        console.log("user: ", this.user)
+        // await formData.append("user", this.user)
+        // console.log("user: ", this.user)
         // await formData.append("gmail", this.gmail)
-        console.log(file)
-        console.log("formData: ", formData)
+        // console.log(file)
+        // console.log("formData: ", formData)
         APIService.upload_file(formData)
-        .then(res => {
-          
-          console.log("Add to Calendar")
-          for (let key in res.data) {
-            console.log(key, res.data[key])
-          }
+        .then(res => {          
+          this.calendarOptions.events = res.data ? [] : null
+          console.log(res.data)
+          // console.log("Add to Calendar")
+          // for (let key in res.data) {
+          //   console.log(key, res.data[key])
+          // }
+          // this.calendarOptions.events.push(
+          //   { title: 'test event', date: '2023-07-05'}
+          // )
           // var batch = gapi.client.newBatch();
           Object.entries(res.data).forEach(
             ([key, shift]) => {
               // let blah = JSON.stringify(value)
               // console.log(blah.substring(1,blah.length-1))
-              console.log(shift["summary"], shift["start"]["dateTime"], shift["end"]["dateTime"])
+              // console.log(shift["summary"], shift["start"]["dateTime"], shift["end"]["dateTime"])
             //   gapi.client.calendar.events.insert({
             //   'calendarId': 'primary',
             //   'resource': blah.substring(1,blah.length-1)
             // });
-              let new_event = {
-                "summary": shift["summary"],
-                "location": shift["location"],
-                "description": shift["description"],
-                "start": {
-                  "dateTime": shift["start"]["dateTime"],
-                  "timeZone": "America/Los_Angeles"
-                },
-                "end": {
-                  "dateTime": shift["end"]["dateTime"],
-                  "timeZone": "America/Los_Angeles"
-                },
-              }
-              this.user_shifts.push(new_event)
+              // let new_event = {
+              //   "summary": shift["summary"],
+              //   "location": shift["location"],
+              //   "description": shift["description"],
+              //   "start": {
+              //     "dateTime": shift["start"]["dateTime"],
+              //     "timeZone": "America/Los_Angeles"
+              //   },
+              //   "end": {
+              //     "dateTime": shift["end"]["dateTime"],
+              //     "timeZone": "America/Los_Angeles"
+              //   },
+              // }
+              // this.user_shifts.push(new_event)
+
+              // console.log(`title: ${shift["start"]["dateTime"]}`)
+              this.calendarOptions.events.push({
+              // FullCalendar.eventAdd({
+                "title": shift["summary"],
+                "start": shift["start"]["dateTime"],
+                // "end": shift["end"]["dateTime"],
+              })
+              
               // batch.add(gapi.client.calendar.events.insert({
               //   'calendarId': 'primary',
               //   'resource': new_event
@@ -223,6 +401,15 @@ export default defineComponent({
               // });
             }
           );
+          // this.calendarOptions.events.push({
+          //     // FullCalendar.eventAdd({
+          //       "title": "test-2",
+          //       "start": "2023-06-05",
+          //       "end": "2023-06-05",
+          //     })
+          // let myCalendar = $refs.myCalendar; 
+          // myCalendar.refetchEvents();
+          // console.log(this.calendarOptions.events)
           // ====== NOTE: this loads the schedule to Google Calendar ============= 
           // batch.then(function(){
           //   console.log('all jobs done!!!')
@@ -242,7 +429,7 @@ export default defineComponent({
           // })
   
           // console.log("res: ", res.data)
-        
+          // FullCalendar.refetchEvents()
         })
         .catch(err => {
           Notify.create({
@@ -254,6 +441,7 @@ export default defineComponent({
     },
 
     async get_users() {
+      let calendarApi = this.$refs.fullCalendar.getApi()
       console.log("triggered")
       if (this.file) {
         this.loading = true
@@ -272,11 +460,17 @@ export default defineComponent({
           if (res.data["month"] != "false"){
             if (!this.date.includes(res.data["month"])){
               this.date = res.data["month"] + this.date.slice(3)
+              let new_date = new Date('01 ' + res.data["month"] + this.date.slice(3))
+              console.log(new_date.toISOString())
+              calendarApi.gotoDate(new_date.toISOString())
+              calendarApi.setOption('contentHeight', 'auto')
+              calendarApi.updateSize()
             }
           }
           this.users = res.data["users"]
           this.show_users = true
           this.loading = false
+          this.getShifts()
         })
       }
     },
@@ -305,7 +499,7 @@ export default defineComponent({
       });
       // this.submit_button = false
     },
-
+    
     async test_backend() {
       APIService.test_calendar().then(res => {
         console.log("res: ", res.data)
@@ -359,44 +553,27 @@ export default defineComponent({
           appendPre('Event created: ' + event.htmlLink);
         });
     },
-    
-    async get_today() {
-      let today = new Date();
-      let dd = today.getDate();
-      let mm = today.getMonth()+1; //January is 0!
-      let yyyy = today.getFullYear(); 
-      console.log("today: ", today)
-      // this.date = mm.toString().padStart(2, '0') + " " + yyyy;
-      this.date = this.getMonthShortName(mm) + " " + yyyy
-    },
 
-    getMonthShortName(monthNo) {
-      const date = new Date();
-      date.setMonth(monthNo - 1);
+    // add_to_calendar() {
+    //   let new_event = {
+    //     'summary': 'Day',
+    //     'location': 'AMCS',
+    //     'description': 'Day',
+    //     'start': {'dateTime': '2023-06-20T07:00:00-07:00',
+    //     'timeZone': 'America/Los_Angeles'},
+    //     'end': {'dateTime': '2023-06-20T19:00:00-07:00',
+    //     'timeZone': 'America/Los_Angeles'}}
 
-      return date.toLocaleString('en-US', { month: 'short' });
-    },
+    //   const request = gapi.client.calendar.events.insert({
+    //     'calendarId': 'primary',
+    //     'resource': new_event
+    //   });
 
-    add_to_calendar() {
-      let new_event = {
-        'summary': 'Day',
-        'location': 'AMCS',
-        'description': 'Day',
-        'start': {'dateTime': '2023-06-20T07:00:00-07:00',
-        'timeZone': 'America/Los_Angeles'},
-        'end': {'dateTime': '2023-06-20T19:00:00-07:00',
-        'timeZone': 'America/Los_Angeles'}}
-
-      const request = gapi.client.calendar.events.insert({
-        'calendarId': 'primary',
-        'resource': new_event
-      });
-
-      request.execute(function(event) {
+    //   request.execute(function(event) {
         
-      });
+    //   });
 
-    },
+    // },
 
     gapiLoaded() {
         gapi.load('client', this.initializeGapiClient);
@@ -523,7 +700,6 @@ export default defineComponent({
   },
 
   created() {
-    this.get_today()
     
   },
   
@@ -538,7 +714,15 @@ export default defineComponent({
     this.maybeEnableButtons();
     this.get_stored_gmail();
     this.gapiLoaded()
-    this.gisLoaded()    
+    this.gisLoaded()
+    this.getShifts();
+    // console.log(document.getElementsByClassName('fc-toolbar-title')[0].innerText);
+    // this.date = document.getElementsByClassName('fc-toolbar-title')[0].innerText 
+    // let nav_buttons = document.getElementsByClassName('.fc-next-button, .fc-prev-button, .fc-today-button, .fc-month-button');
+    // nav_buttons.forEach(nav => {nav.addEventListener('click', console.log("nav button clicked!"))}) 
+    // document.getElementsByClassName('fc-prev-button').addEventListener('change', function(e) {
+    //   console.log(document.getElementsByClassName('fc-toolbar-title')[0].innerText);
+    // });
   },
   
 })

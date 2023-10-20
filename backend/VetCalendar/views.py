@@ -1,10 +1,16 @@
 from django.shortcuts import render, redirect, HttpResponse
+from django.http import JsonResponse
 from rest_framework import viewsets
-from .serializers import TodoSerializer
-from .models import Todo
+from .serializers import TodoSerializer, CalendarSerializer
+from django.core import serializers
+from .models import Todo, Calendar
 from django.views.decorators.csrf import csrf_exempt
-from .scripts import convert_schedule, test_calendar, test_event, get_users
+from .scripts import convert_schedule, test_calendar, test_event, get_users, load_schedule
 import datetime, json
+from datetime import datetime, date, timedelta
+import dateutil.parser as parser
+import numpy as np
+from django.utils import timezone
 # Create your views here.
 
 class TodoView(viewsets.ModelViewSet):
@@ -30,18 +36,24 @@ month_abbrev = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 
 @csrf_exempt 
 def upload_file(request):
-    print (request.POST['date'])
+    # print (request.POST['date'])
     input_date = request.POST["date"]
-    user= request.POST["user"]
+    # user= request.POST["user"]
     # gmail = request.POST["gmail"][:-10]
-    month = month_list[input_date[:3]]
     year = input_date[4:]
     file_name = request.FILES['file']
+    file_month = "false"
+    for month in month_abbrev:
+        if month.lower() in file_name.name.lower():
+            # print(month)
+            file_month = month
     # print(file_name)
     # print(gmail)
     # contents = ''
     # print(user)
-    contents = convert_schedule(file_name, user, month, year)
+    # contents = convert_schedule(file_name, user, month, year)
+    month = month_list[file_month[:3]] if file_month != "false" else month_list[input_date[:3]]
+    contents = load_schedule(file_name, month, year)
     # print("the contents are: ", contents) 
     return HttpResponse(contents)
 
@@ -57,6 +69,34 @@ def return_user_list(request):
     # print("contents", users)
     content = json.dumps({"month": file_month, "users":users})
     return HttpResponse(content)
+
+@csrf_exempt 
+def return_shifts(request):
+    # print(request.body)
+    content = json.loads(request.body)
+    # print(content["date"])
+    start = content["date"]["start"]
+    end = content["date"]["end"]
+    shifts = Calendar.objects.filter(start__gte=start, end__lte=end)
+    # print(shifts)
+    events = []
+    users = []
+    if shifts:
+        for shift in shifts:
+            # print(shift.start)
+            events.append({
+                "id": shift.id,
+                "user": shift.user_initials,
+                "start": str(shift.start),
+                "end": str(shift.end),
+            })
+            if not shift.user_initials in users: users.append(shift.user_initials)
+        results = {'shifts': events, 'users': users}
+        # print(users)
+        # print(timezone.now())
+        return JsonResponse(results)
+    else:
+        return HttpResponse("No Shifts")
 
 @csrf_exempt 
 def calendar_test(request):

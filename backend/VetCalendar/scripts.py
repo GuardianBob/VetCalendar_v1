@@ -1,3 +1,5 @@
+
+
 # NOTE: 2021 SChedule format
 
 # from docx import Document
@@ -86,6 +88,8 @@ from __future__ import print_function
 import datetime
 from datetime import timedelta
 import os.path
+from .models import Calendar
+from django.utils import timezone
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -146,9 +150,6 @@ def convert_schedule(schedule, user, month, year):
   month = user_month
   year = "2022"
   shifts = []
-
-  
-
   for table in wordDoc.tables:
       date = []
       j = 0
@@ -221,9 +222,128 @@ def convert_schedule(schedule, user, month, year):
   # end_time = start_time + timedelta(hours=12)
   # print("start: ", start_time, "end: ", end_time)
   # print(shifts)
+  
   events = add_shifts(shifts)
   json_shifts = json.dumps(events)
   return json_shifts
+
+def load_schedule(schedule, month, year):
+  print(f'year start: {year}')
+  user_month = month
+  user_year = year
+  wordDoc = Document(schedule)
+  while not user_month in month_variables:
+    # user_month = simpledialog.askstring(title="Month", prompt="Please enter the 2-digit month")
+    user_month = "08"
+
+  while not int(user_year) > 2021:
+    # user_year = simpledialog.askstring(title="Year", prompt="Please enter the 4-digit year")
+    user_year = "2022"
+  # wordDoc = Document('SEP21_schedule.docx')
+  # wordDoc = Document('Aug 2022(CORRECT).docx')
+  month = user_month
+  # year = "2022"
+  shifts = []
+  for table in wordDoc.tables:
+      date = []
+      j = 0
+      for row in table.rows:
+        row_text = ''
+        i = 0
+        k = 0
+        shift = ''
+        time = ''
+        for cell in row.cells:
+          row_text = row_text + cell.text + ","
+          if cell.text in month_list:
+            month = cell.text
+          if cell.text.lower() in day_list:
+            j = 0
+            # print('reading cells')
+          else:
+            if j % 6 == 1:
+                date.append(cell.text)
+                # print(f'date {date}')
+            else:
+              if i % 2 == 0:
+                shift = cell.text
+                if j % 6 == 2:
+                  time = "07:00"
+                if j % 6 == 3:
+                  time = "10:00"
+                if j % 6 == 4:
+                  time = "14:00"
+                if j % 6 == 5:
+                  time = "18:00"
+              # if "MA" in cell.text:
+              # print(user)
+              elif cell.text != "":
+                cell_user = cell.text
+                shift_start = datetime.datetime(
+                  int(user_year),
+                  int(user_month),
+                  int(date[i]),
+                  int(time[:2]),
+                  00,
+                  00
+                )
+                # print(shift_start)
+                # print(f'user: {cell_user}')
+                shifts.append({
+                  "user": cell_user,
+                  "shift": shift, 
+                  "date": user_year + "-" + user_month + "-" + date[i], 
+                  "time": time, 
+                  "month": month,
+                  "year": user_year,
+                  "shift_start": str(shift_start),
+                  "shift_end": str(shift_start + timedelta(hours=12)),
+                })
+                
+          i += 1
+
+        # print(row_text, "row", j)
+        # print("date row", date)
+        j += 1
+        i = 0
+        k = 0
+        if j % 6 == 0: 
+          date = []
+
+  # header = ['Subject', 'Start date', 'Start time']
+  # with open(f'schedule_{user_month}-{user_year}.csv', 'w', encoding='UTF8', newline='\n') as f:
+  #   writer = csv.writer(f)
+  #   writer.writerow(header)
+  #   for shift in shifts:
+  #     writer.writerow(shift)
+
+  # f.close()
+  # start_time = datetime.datetime(2023,6,21,3,45,00)
+  # end_time = start_time + timedelta(hours=12)
+  # print("start: ", start_time, "end: ", end_time)
+  # print(shifts)
+  load_database(shifts, user_month, user_year)
+  # events = add_shifts(shifts)
+  # json_shifts = json.dumps(events)
+  return "Success!"
+
+def load_database(shifts, month, year):
+  try:
+    print(month, year)
+    Calendar.objects.filter(month=month, year=year).delete()
+    i = 0
+    for shift in shifts:
+      calendar_shift = Calendar.objects.create(
+        user_initials = shift["user"].strip(),
+        start = shift["shift_start"],
+        end = shift["shift_end"],
+        month = month,
+        year = year,
+      )
+    return
+  except HttpError as error:
+    print('An error occurred: %s' % error)  
+
 
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 
@@ -369,7 +489,7 @@ def add_shifts(shifts):
         # print("second half: ", shift["shift_start"][11:])
         # events = {
         events[f'shift_{i}'] = {
-          "summary": shift["shift"],
+          "summary": shift["user"], # shift["shift"] + "-" + shift["user"],
           "location": "AMCS",
           "description": shift["shift"],
           "start": {

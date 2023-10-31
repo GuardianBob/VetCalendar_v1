@@ -56,9 +56,9 @@
             class="q-px-lg q-mt-sm"
             :disabled="disabled"
           />
-          <q-btn v-if="auth_token" class="outline" id="fetch_calendars" @click="verify_calendar">Verify Calendars</q-btn>
-          <q-btn v-if="show_add2Cal" class="outline" id="fetch_calendars" @click="upload_shifts_v2">Add Google Events</q-btn>
-          <q-btn v-if="show_add2Cal" class="outline" id="fetch_calendars" @click="clear_google_events">Clear Google Events</q-btn>
+          <!-- <q-btn v-if="auth_token" class="outline" id="fetch_calendars" @click="verify_calendar">Verify Calendars</q-btn> -->
+          <q-btn v-if="auth_token" class="outline" id="fetch_calendars" @click="sync_google">Sync Google Calendar</q-btn>
+          <!-- <q-btn v-if="auth_token" class="outline" id="fetch_calendars" @click="clear_google_events">Clear Google Events</q-btn> -->
           <br>
           <q-spinner
           v-show="loading"
@@ -343,6 +343,21 @@ export default defineComponent({
       this.file = null
     },
 
+    async timeMin() {
+      let tz_offset =  (new Date()).getTimezoneOffset() * 60000
+      let date_start = new Date(`01 ${this.date}`)
+      let start = new Date(date_start - tz_offset).toISOString().slice(0,-5) + "Z"
+      return start
+    },
+
+    async timeMax() {
+      let tz_offset =  (new Date()).getTimezoneOffset() * 60000
+      let date_start = new Date(`01 ${this.date}`)
+      let date_end = new Date(date_start.getFullYear(), date_start.getMonth()+1, 0, 23, 59)
+      let end = new Date(date_end - tz_offset).toISOString().slice(0,-5) + "Z"
+      return end
+    },
+
     async getShifts2() {
       // const request = gapi.client.calendar.events.insert({
       //   'calendarId': 'primary',
@@ -492,7 +507,59 @@ export default defineComponent({
       }
     },
 
+    async sync_google() {
+      if (this.user != null) {
+        await this.verify_calendar().then(() => {
+          console.log("syncing...")
+          this.sync_shifts()
+        })
+        
+      } else {
+          Notify.create({
+            message: "Please select which user to sync.",
+            color: "red",
+            position: "center"
+          })
+        }
+    },
+
     async list_calendars() {
+      return new Promise(resolve => {
+        const get_calendars = gapi.client.calendar.calendarList.list()
+        console.log(get_calendars)
+        let exists = false
+        get_calendars.execute((cal) => {
+          let calendar = cal.items.find(o => o.summary.includes('AMCS Schedule'))
+          if (calendar != undefined) {
+            this.calendar_id = calendar.id
+            exists = true
+          }
+          resolve(exists)
+        })
+      })
+    },
+
+    async list_calendars_v1() {
+      return new Promise(async (resolve, reject) => {
+        const get_calendars = gapi.client.calendar.calendarList.list()
+        console.log(get_calendars)
+        let exists = false
+        await get_calendars.execute((cal) => {
+          console.log(cal)
+          cal.items.forEach((item) => {
+            if (item.summary.includes("AMCS Schedule")) {
+              this.calendar_id = item.id
+              console.log(`calendar id: ${this.calendar_id}`)
+              exists = true
+            }
+          })
+          resolve(exists)
+          reject("Error!")
+        })
+      })
+    },
+
+    async list_calendars_OLD() {
       return new Promise(async (resolve, reject) => {
         const get_calendars = gapi.client.calendar.calendarList.list()
         console.log(get_calendars)
@@ -515,15 +582,21 @@ export default defineComponent({
       })
     },
 
-    async add_calendar(calendar) {
+    async add_calendar() {
       return new Promise(async (resolve, reject) => {
-        const insert_calendar = gapi.client.calendar.calendars.insert(calendar);
-        console.log(insert_calendar)
+        const insert_calendar = gapi.client.calendar.calendars.insert({
+          summary: 'AMCS Schedule'
+        });
+        // console.log(insert_calendar)
         await insert_calendar.execute((res) => {
-          console.log(res, res.id, res.summary)
+          // console.log(res, res.id, res.summary)
           this.calendar_id = res.id
           if (!res.error) {
             resolve(true)
+            Notify.create({
+              message: "Successfully created calendar!",
+              color: "green",
+            })
           } else {
             reject(false)
           }
@@ -532,6 +605,19 @@ export default defineComponent({
     },
 
     async verify_calendar() {
+      console.log(this.calendar_id)
+      await this.list_calendars().then((response) => {
+        console.log(response)
+        if (response !== true) {
+          this.add_calendar().then((res) => {
+            return
+          })
+        } 
+        return
+      })      
+    },
+
+    async verify_calendar_OLD() {
       this.list_calendars().then((res) => { 
         console.log(res[0]) 
         // if (res.includes("AMCS")) {
@@ -573,6 +659,27 @@ export default defineComponent({
     },
 
     async get_google_events() {
+      return new Promise(async resolve => {
+        if (!this.calendar_id.length > 0) {
+          // Need to fix so function waits for this to finish before trying to continue
+          this.verify_calendar()
+        } else {
+          let params = {
+            'calendarId': this.calendar_id,  
+            'timeMin': await this.timeMin(),
+            'timeMax': await this.timeMax(),
+          }
+          const get_events = gapi.client.calendar.events.list(params)
+          // console.log(get_events)
+          await get_events.execute((events) => {
+            // console.log(events.items)
+            resolve(events.items)
+          })
+        }
+      })
+    },
+
+    async get_google_events_old() {
       return new Promise(async (resolve, reject) => {
         if (!this.calendar_id.length > 0) {
           // Need to fix so function waits for this to finish before trying to continue
@@ -616,6 +723,28 @@ export default defineComponent({
 
     async clear_google_events() {
       this.get_google_events().then((res) => {
+        // console.log(res)
+        if (res.length > 0) {
+          var batch = gapi.client.newBatch();
+          res.forEach((event) => {
+            batch.add(gapi.client.calendar.events.delete({
+              'calendarId': this.calendar_id,
+              'eventId': event.id
+            }));
+          })
+          batch.then(() => {
+            console.log('all jobs done!!!')
+            Notify.create({
+              message: "Schedule successfully cleared",
+              color: "green",
+            })
+          })
+        }
+      });
+    },
+
+    async clear_google_events_old() {
+      this.get_google_events().then((res) => {
         console.log(res)
         if (res.length > 0) {
           var batch = gapi.client.newBatch();
@@ -634,6 +763,60 @@ export default defineComponent({
           })
         }
       });
+    },
+
+    async sync_shifts() {
+      if (this.calendar_id.length > 0) {
+        if (this.user != null) {
+          await this.clear_google_events();
+          var batch = gapi.client.newBatch();
+          this.disabled = true
+          console.log(this.user)
+          this.calendarOptions.events.forEach((event) => {
+            let shift_start = event.start.replace(/ /g, 'T')
+            console.log(event.title, shift_start)
+            let shift = {
+              "summary": event.title,
+              "start": {
+                "dateTime": shift_start,
+                "timeZone": "UTC"
+              },
+              "end": {
+                "dateTime": shift_start,
+                "timeZone": "UTC"
+              },
+              "reminders": {
+                "useDefault": false,
+              },
+              "source.title" : "VetScheduler"
+            }
+            batch.add(gapi.client.calendar.events.insert({
+              'calendarId': this.calendar_id,
+              'resource': shift
+            }));
+          })
+            // ====== NOTE: this loads the schedule to Google Calendar ============= 
+          // console.log(batch)
+          batch.then(() => {
+            this.loading = false
+            this.submit_button = false
+            this.clearFilters()
+            // this.user_shifts = []
+            console.log('all jobs done!!!')
+            Notify.create({
+                message: "Schedule uploaded successfully",
+                color: "green",
+              })
+          });
+        } else {
+          Notify.create({
+            message: "Please select which user to sync.",
+            color: "red",
+            position: "center"
+          })
+        }
+        
+      }
     },
 
     async upload_shifts_v2() {

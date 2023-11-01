@@ -1,5 +1,5 @@
 <template>
-  <q-layout view="lHh Lpr lFf">
+  <q-layout view="hHh Lpr lff">
     <q-header elevated>
       <q-toolbar>
         <q-btn
@@ -8,26 +8,27 @@
           round
           icon="menu"
           aria-label="Menu"
-          @click="toggleLeftDrawer"
+          @click="drawer = !drawer"
         />
 
         <q-toolbar-title>
           Vet Scheduler
         </q-toolbar-title>
 
-        <div>Quasar v{{ $q.version }}</div>
+        <div>Version: {{ version }}</div>
       </q-toolbar>
     </q-header>
 
     <q-drawer
-      v-model="leftDrawerOpen"
-      show-if-above
+      v-model="drawer"
       bordered
+      overlay
     >
       <q-list>
         <q-item-label
           header
         >
+          <q-icon v-if="$q.platform.is.mobile" name="menu" size="md" color="primary" @click="drawer = !drawer" ></q-icon>
           Essential Links
         </q-item-label>
 
@@ -48,6 +49,7 @@
 <script>
 import { defineComponent, ref } from 'vue'
 import EssentialLink from 'components/EssentialLink.vue'
+import { version } from '../../package.json'
 
 const linksList = [
   {
@@ -100,16 +102,19 @@ export default defineComponent({
   components: {
     EssentialLink
   },
-
-  setup () {
-    const leftDrawerOpen = ref(false)
-
+  data() {
     return {
+      version: version
+    }
+  },
+  setup () {
+    
+    return {
+      drawer: ref(false),
       essentialLinks: linksList,
-      leftDrawerOpen,
-      toggleLeftDrawer () {
-        leftDrawerOpen.value = !leftDrawerOpen.value
-      }
+      // toggleLeftDrawer () {
+      //   leftDrawerOpen.value = !leftDrawerOpen.value
+      // }
     }
   }
 })

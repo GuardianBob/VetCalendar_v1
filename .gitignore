@@ -154,3 +154,4 @@ frontend/.env.development.local
 backend/backend/token.json
 backend/backend/credentials.json
 backend/VetCalendar/credentials.json
+backend/vet_cal.db.sql

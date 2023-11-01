@@ -94,9 +94,14 @@ module.exports = configure(function (/* ctx */) {
       // server: {
       //   type: 'http'
       // },
-      // port: process.env.APP_PORT,
+      port: process.env.APP_PORT,
       proxy: 'http://127.0.0.1:8000',
       // proxy: 'http://jbearlocal.com:8000'
+      // public:
+      //   "https://" +
+      //   process.env.APP_HOST +
+      //   ":" +
+      //   process.env.APP_PORT,
     },
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#framework

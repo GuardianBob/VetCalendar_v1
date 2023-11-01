@@ -1,51 +1,107 @@
 <template>
-  <q-page class="q-pt-xl">
-    <div class="row align-start justify-center">
-      <div class="col-10 col-sm-5 col-md-5 col-lg-5 text-center">
-        
-        <q-form           
-          @submit="upload_shifts_v2">
-          <!-- <q-input filled v-model="gmail" required type="email" label="Gmail"></q-input> -->
-          <q-file
-          v-model="file"
-          label="Select File"
-          accept=".docx, .doc"
-          class="q-my-sm"
-          counter
-          >
+  <q-page class="q-pt-xl" >
+    <!-- <div class="col-10 col-sm-5 col-md-5 col-lg-5"> -->
+      <q-form           
+      @submit="upload_shifts_v2">
+      <div class="row align-start justify-center q-mx-sm items-center">
+        <!-- <q-input filled v-model="gmail" required type="email" label="Gmail"></q-input> -->
+          <div class="col-4 q-ml-sm">
+            
+            <q-btn class="q-mr-xs" color="primary" round size="sm" id="enable_file" @click="enable_file = !enable_file">
+              <q-icon name="attach_file" />
+              <q-tooltip class="bg-accent" anchor="bottom middle">Upload File</q-tooltip>
+            </q-btn>
+            
+            <q-btn class="outline q-pa-none q-mr-xs" round dense id="authorize_button" @click="handleAuthClick" v-show="!auth_token">
+              <img width="20" src="~assets/Google_G_Logo.svg" alt="">
+              <q-tooltip class="bg-accent" anchor="bottom middle">Connect to Google</q-tooltip>
+            </q-btn>
+            <q-btn v-if="auth_token" class="q-mr-xs" color="accent" size="sm" round id="fetch_calendars" @click="sync_google" icon="sync">
+              <q-tooltip class="bg-accent" anchor="bottom middle">Sync to Google Calendar</q-tooltip>
+            </q-btn>
+            <q-btn class="" color="primary" round size="sm" id="enable_file" @click="info = true">
+              <q-icon name="question_mark" />
+              <q-tooltip class="bg-accent" anchor="bottom middle">Help</q-tooltip>
+            </q-btn>
+            <!-- <q-input filled v-model="date" label="Select Date" class="q-my-sm" v-show="enable_date"></q-input> -->
+          </div>
+          <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3"></div>
+          <div class="col-1 text-right q-mr-sm">
+            <q-btn color="primary" round size="sm" id="enable_date" @click="enable_date = !enable_date" icon="event">
+              <!-- <q-icon name="event" /> -->
+              <q-tooltip class="bg-accent" anchor="bottom middle">Select Date</q-tooltip>
+              <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                <q-date v-model="date" mask="MMM YYYY">
+                  <div class="row items-center justify-end">
+                    <q-btn v-close-popup label="Close" color="accent" flat />
+                  </div>
+                </q-date>
+              </q-popup-proxy>
+            </q-btn>
+          </div>
+          <div class="col-xs-3 col-lg-2 col-md-2 col-sm-2 q-mr-sm">          
+            <q-select class="q-mx-none" v-model="user" :options="users" dense options-dense @update:model-value="filterShifts()">
+              <template v-slot:prepend>
+                <q-icon name="filter_alt" round color="primary"/>
+              </template>
+              <template v-slot:append>
+                <q-btn v-if="user !== null" class="q-ml-md q-px-sm" color="negative" size="md" flat rounded id="clear_filters_button" @click.stop.prevent="clearFilters" icon="cancel"/>
+                <!-- <q-icon name="close" @click.stop.prevent="clearFilters" class="cursor-pointer" v-if="user !== null" /> -->
+              </template>
+              <q-tooltip class="bg-accent" anchor="center start">Filter Schedule</q-tooltip>
+            </q-select>
+          </div>
+      </div>
+      <div class="row justify-center q-mx-lg items-center" v-show="enable_file">
+        <div class="col-lg-6 col-md-6 col-sm-6 col-xs-9 text-center">
+        <q-file
+        v-model="file"        
+        label="Select File"
+        accept=".docx, .doc"
+        class="q-my-sm"
+        counter
+        >
           <!-- <q-btn class="q-ml-md q-px-sm" color="primary" size="md" flat rounded id="clear_filters_button" @click="clearFile" icon="cancel"/> -->
           <template v-slot:prepend>
             <q-icon name="attach_file" />
           </template>
           <template v-slot:append>
-            <q-icon name="cancel" color="primary" v-if="file !== null" @click="file = null" class="cursor-pointer" />
+            <q-icon name="cancel" color="negative" v-if="file !== null" @click="file = null" class="cursor-pointer" />
           </template>
-          </q-file>
-          <q-input filled v-model="date" label="Verify Date" class="q-my-sm">
-            <template v-slot:append>
-              <q-icon name="event" class="cursor-pointer">
-                <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                  <q-date v-model="date" mask="MMM YYYY">
-                    <div class="row items-center justify-end">
-                      <q-btn v-close-popup label="Close" color="primary" flat />
-                    </div>
-                  </q-date>
-                </q-popup-proxy>
-              </q-icon>
-            </template>
-          </q-input>
-          <q-btn class="q-my-sm q-px-xl" color="primary" outline id="upload_button" @click="file_upload" v-show="file">Upload File</q-btn>
-          <div class="row justify-center">
-            <q-select v-model="user" :options="users" label="Select User Initials" class="q-my-sm col-8" @update:model-value="filterShifts()"/>
-            <q-btn v-if="user !== null" class="q-ml-md q-px-sm" color="primary" size="md" flat rounded id="clear_filters_button" @click="clearFilters" icon="cancel"/>
-          </div>
-          <div class="row q-py-sm">
+        </q-file>
+        </div>
+        <div class="col-1 text-center">
+        <q-btn class="q-mx-sm" size="sm" color="primary" round id="upload_button" @click="file_upload" v-show="file">
+          <q-icon name="upload"></q-icon>
+          <q-tooltip class="bg-accent">Upload File</q-tooltip>
+        </q-btn>
+        </div>
+      </div>
+      
+        <!-- <div class="col-6"> -->
+        <!-- <q-input filled v-model="date" label="Select Date" class="q-my-sm"> -->
+          <!-- <template v-slot:append> -->
+            <!-- <q-icon name="event" class="cursor-pointer">
+              <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                <q-date v-model="date" mask="MMM YYYY">
+                  <div class="row items-center justify-end">
+                    <q-btn v-close-popup label="Close" color="primary" flat />
+                  </div>
+                </q-date>
+              </q-popup-proxy>
+            </q-icon> -->
+          <!-- </template> -->
+        <!-- </q-input> -->
+      <!-- </div> -->
+          <!-- <q-btn class="q-my-sm q-px-xl" color="primary" outline id="upload_button" @click="file_upload" v-show="file">
+            Upload File
+            <q-tooltip class="bg-accent">Upload File</q-tooltip>
+          </q-btn> -->
+          <!-- <div class="row q-py-sm">
             <div class="col-12 text-center" v-for="(shift, index) in user_shifts" :key="index">
               {{ splitDate(shift.start.dateTime) }} - <span class="text-weight-bold">{{ shift.summary }}</span>
             </div>
-          </div>
-          <q-btn class="outline" id="authorize_button" @click="handleAuthClick" v-show="!auth_token">
-            <img width="20" style="margin-bottom:3px; margin-right:5px" src="~assets/Google_G_Logo.svg" alt="">Connect Google</q-btn>
+          </div> -->          
           <q-btn
             v-if="auth_token"
             :loading="disabled"
@@ -56,9 +112,9 @@
             class="q-px-lg q-mt-sm"
             :disabled="disabled"
           />
-          <q-btn v-if="auth_token" class="outline" id="fetch_calendars" @click="verify_calendar">Verify Calendars</q-btn>
-          <q-btn v-if="show_add2Cal" class="outline" id="fetch_calendars" @click="upload_shifts_v2">Add Google Events</q-btn>
-          <q-btn v-if="show_add2Cal" class="outline" id="fetch_calendars" @click="clear_google_events">Clear Google Events</q-btn>
+          <!-- <q-btn v-if="auth_token" class="outline" id="fetch_calendars" @click="verify_calendar">Verify Calendars</q-btn> -->
+          
+          <!-- <q-btn v-if="auth_token" class="outline" id="fetch_calendars" @click="clear_google_events">Clear Google Events</q-btn> -->
           <br>
           <q-spinner
           v-show="loading"
@@ -66,9 +122,9 @@
           size="3em"
           :thickness="3"
           />
+        <!-- </div> -->
         </q-form>
-      </div>
-    </div>
+      <!-- </div> -->
     <div class="row align-start justify-center">
       <div id="test_add" class="col-10 col-md-10 col-sm-8 col-lg-6 col-xs-12 q-mx-sm text-center" style="max-height: fit-content;">
         <FullCalendar id="fullCalendar" ref="fullCalendar" :custom-buttons="customButtons" :options='calendarOptions'/>
@@ -83,17 +139,20 @@
 
       <!-- <pre id="content" style="white-space: pre-wrap;"></pre> -->
     </div>
-    
+    <q-dialog v-model="info" transition-show="rotate" transition-hide="rotate" style="max-width: 50%;">
+      <ButtonDefinitions />
+    </q-dialog>
   </q-page>
 </template>
 
 
 <script>
-import { defineComponent, ref } from 'vue'
+import { defineComponent, ref, onMounted } from 'vue'
 import { useQuasar, Notify } from "quasar"
 import APIService from "../../services/api"
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
+import ButtonDefinitions from 'components/ButtonDefinitions.vue'
 
 const quasar = useQuasar()
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID
@@ -109,7 +168,8 @@ const month_abbrev = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "S
 export default defineComponent({
   name: "FileUpload",
   components: {
-    FullCalendar // make the <FullCalendar> tag available
+    FullCalendar, // make the <FullCalendar> tag available
+    ButtonDefinitions
   },
 
   data() {
@@ -180,6 +240,9 @@ export default defineComponent({
       shift_data: ref([]),     
       calendar_id: ref([]),
       show_add2Cal: ref(false),
+      enable_file: ref(false),
+      enable_date: ref(false),
+      info: ref(false),
       // onFileSelected(file) {
       //   this.file = file
       //   console.log(file)
@@ -210,7 +273,7 @@ export default defineComponent({
         }
         this.date = new_month + " " + new_year.toString()
         console.log(new_year)
-        this.user = null
+        // this.user = null
         // this.get_users()      
       }
     },
@@ -218,6 +281,12 @@ export default defineComponent({
       // console.log(newValue, oldValue)
       this.handleMonthChange()
     },
+    // user(newValue, oldValue) {
+    //   if (newValue != null) {
+    //     console.log("filter from cookie", this.user)
+    //     this.filterShifts()
+    //   }
+    // },
     // user(newValue, oldValue) {
     //   console.log(newValue)
     //   if (newValue != null){
@@ -284,7 +353,24 @@ export default defineComponent({
         await formData.append("file", file)
         await formData.append("date", this.date)
         await APIService.upload_file(formData)
+        .then((res) => {
+          if (res.status == 200) {
+            Notify.create({
+              message: "Successfully uploaded shifts!",
+              color: "green",
+              position: 'center',
+            })
+          } else {
+            Notify.create({
+              message: "Something went wrong",
+              color: "red",
+              position: 'center',
+            })
+          }
+        })        
         this.getShifts()
+        this.clearFile()
+        this.clearFilters()
       }
     },
 
@@ -318,17 +404,18 @@ export default defineComponent({
           // 
         }
       })
-      console.log(this.shifts)
+      // console.log(this.shifts)
       calendarApi.updateSize()
     },
 
     async filterShifts() {
-      // console.log(this.user)
+      console.log(this.user)
       this.calendarOptions.events = []
       this.shifts.map(shift => {
         if (shift["title"] == this.user){
           // console.log("matches")
           this.calendarOptions.events.push(shift)
+          localStorage.setItem("filtered_user", this.user)
         }
       })
     },
@@ -337,10 +424,27 @@ export default defineComponent({
       this.calendarOptions.events = this.shifts
       // console.log(this.shifts.length)
       this.user = null
+      localStorage.removeItem("filtered_user")
     },
 
     async clearFile() {
       this.file = null
+      this.enable_file = false
+    },
+
+    async timeMin() {
+      let tz_offset =  (new Date()).getTimezoneOffset() * 60000
+      let date_start = new Date(`01 ${this.date}`)
+      let start = new Date(date_start - tz_offset).toISOString().slice(0,-5) + "Z"
+      return start
+    },
+
+    async timeMax() {
+      let tz_offset =  (new Date()).getTimezoneOffset() * 60000
+      let date_start = new Date(`01 ${this.date}`)
+      let date_end = new Date(date_start.getFullYear(), date_start.getMonth()+1, 0, 23, 59)
+      let end = new Date(date_end - tz_offset).toISOString().slice(0,-5) + "Z"
+      return end
     },
 
     async getShifts2() {
@@ -492,7 +596,59 @@ export default defineComponent({
       }
     },
 
+    async sync_google() {
+      if (this.user != null) {
+        await this.verify_calendar().then(() => {
+          console.log("syncing...")
+          this.sync_shifts()
+        })
+        
+      } else {
+          Notify.create({
+            message: "Please select which user to sync.",
+            color: "red",
+            position: "center"
+          })
+        }
+    },
+
     async list_calendars() {
+      return new Promise(resolve => {
+        const get_calendars = gapi.client.calendar.calendarList.list()
+        console.log(get_calendars)
+        let exists = false
+        get_calendars.execute((cal) => {
+          let calendar = cal.items.find(o => o.summary.includes('AMCS Schedule'))
+          if (calendar != undefined) {
+            this.calendar_id = calendar.id
+            exists = true
+          }
+          resolve(exists)
+        })
+      })
+    },
+
+    async list_calendars_v1() {
+      return new Promise(async (resolve, reject) => {
+        const get_calendars = gapi.client.calendar.calendarList.list()
+        console.log(get_calendars)
+        let exists = false
+        await get_calendars.execute((cal) => {
+          console.log(cal)
+          cal.items.forEach((item) => {
+            if (item.summary.includes("AMCS Schedule")) {
+              this.calendar_id = item.id
+              console.log(`calendar id: ${this.calendar_id}`)
+              exists = true
+            }
+          })
+          resolve(exists)
+          reject("Error!")
+        })
+      })
+    },
+
+    async list_calendars_OLD() {
       return new Promise(async (resolve, reject) => {
         const get_calendars = gapi.client.calendar.calendarList.list()
         console.log(get_calendars)
@@ -515,15 +671,21 @@ export default defineComponent({
       })
     },
 
-    async add_calendar(calendar) {
+    async add_calendar() {
       return new Promise(async (resolve, reject) => {
-        const insert_calendar = gapi.client.calendar.calendars.insert(calendar);
-        console.log(insert_calendar)
+        const insert_calendar = gapi.client.calendar.calendars.insert({
+          summary: 'AMCS Schedule'
+        });
+        // console.log(insert_calendar)
         await insert_calendar.execute((res) => {
-          console.log(res, res.id, res.summary)
+          // console.log(res, res.id, res.summary)
           this.calendar_id = res.id
           if (!res.error) {
             resolve(true)
+            Notify.create({
+              message: "Successfully created calendar!",
+              color: "green",
+            })
           } else {
             reject(false)
           }
@@ -532,6 +694,19 @@ export default defineComponent({
     },
 
     async verify_calendar() {
+      console.log(this.calendar_id)
+      await this.list_calendars().then((response) => {
+        console.log(response)
+        if (response !== true) {
+          this.add_calendar().then((res) => {
+            return
+          })
+        } 
+        return
+      })      
+    },
+
+    async verify_calendar_OLD() {
       this.list_calendars().then((res) => { 
         console.log(res[0]) 
         // if (res.includes("AMCS")) {
@@ -573,6 +748,27 @@ export default defineComponent({
     },
 
     async get_google_events() {
+      return new Promise(async resolve => {
+        if (!this.calendar_id.length > 0) {
+          // Need to fix so function waits for this to finish before trying to continue
+          this.verify_calendar()
+        } else {
+          let params = {
+            'calendarId': this.calendar_id,  
+            'timeMin': await this.timeMin(),
+            'timeMax': await this.timeMax(),
+          }
+          const get_events = gapi.client.calendar.events.list(params)
+          // console.log(get_events)
+          await get_events.execute((events) => {
+            // console.log(events.items)
+            resolve(events.items)
+          })
+        }
+      })
+    },
+
+    async get_google_events_old() {
       return new Promise(async (resolve, reject) => {
         if (!this.calendar_id.length > 0) {
           // Need to fix so function waits for this to finish before trying to continue
@@ -616,6 +812,28 @@ export default defineComponent({
 
     async clear_google_events() {
       this.get_google_events().then((res) => {
+        // console.log(res)
+        if (res.length > 0) {
+          var batch = gapi.client.newBatch();
+          res.forEach((event) => {
+            batch.add(gapi.client.calendar.events.delete({
+              'calendarId': this.calendar_id,
+              'eventId': event.id
+            }));
+          })
+          batch.then(() => {
+            console.log('all jobs done!!!')
+            Notify.create({
+              message: "Schedule successfully cleared",
+              color: "green",
+            })
+          })
+        }
+      });
+    },
+
+    async clear_google_events_old() {
+      this.get_google_events().then((res) => {
         console.log(res)
         if (res.length > 0) {
           var batch = gapi.client.newBatch();
@@ -634,6 +852,60 @@ export default defineComponent({
           })
         }
       });
+    },
+
+    async sync_shifts() {
+      if (this.calendar_id.length > 0) {
+        if (this.user != null) {
+          await this.clear_google_events();
+          var batch = gapi.client.newBatch();
+          this.disabled = true
+          console.log(this.user)
+          this.calendarOptions.events.forEach((event) => {
+            let shift_start = event.start.replace(/ /g, 'T')
+            console.log(event.title, shift_start)
+            let shift = {
+              "summary": event.title,
+              "start": {
+                "dateTime": shift_start,
+                "timeZone": "UTC"
+              },
+              "end": {
+                "dateTime": shift_start,
+                "timeZone": "UTC"
+              },
+              "reminders": {
+                "useDefault": false,
+              },
+              "source.title" : "VetScheduler"
+            }
+            batch.add(gapi.client.calendar.events.insert({
+              'calendarId': this.calendar_id,
+              'resource': shift
+            }));
+          })
+            // ====== NOTE: this loads the schedule to Google Calendar ============= 
+          // console.log(batch)
+          batch.then(() => {
+            this.loading = false
+            this.submit_button = false
+            this.clearFilters()
+            // this.user_shifts = []
+            console.log('all jobs done!!!')
+            Notify.create({
+                message: "Schedule uploaded successfully",
+                color: "green",
+              })
+          });
+        } else {
+          Notify.create({
+            message: "Please select which user to sync.",
+            color: "red",
+            position: "center"
+          })
+        }
+        
+      }
     },
 
     async upload_shifts_v2() {
@@ -934,7 +1206,9 @@ export default defineComponent({
   },
 
   created() {
-    
+    if (localStorage.getItem("filtered_user")) {
+      this.user = localStorage.getItem("filtered_user")
+    }
   },
   
   mounted() {
@@ -949,7 +1223,11 @@ export default defineComponent({
     this.get_stored_gmail();
     this.gapiLoaded()
     this.gisLoaded()
-    this.getShifts();
+    this.getShifts().then(() => {
+      if (this.user) {
+        this.filterShifts()
+      }
+    })
     // console.log(document.getElementsByClassName('fc-toolbar-title')[0].innerText);
     // this.date = document.getElementsByClassName('fc-toolbar-title')[0].innerText 
     // let nav_buttons = document.getElementsByClassName('.fc-next-button, .fc-prev-button, .fc-today-button, .fc-month-button');

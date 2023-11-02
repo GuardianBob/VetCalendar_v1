@@ -387,19 +387,16 @@ export default defineComponent({
 
     async getShiftsYear() {
       let calendarApi = this.$refs.fullCalendar.getApi()
-      let start = calendarApi.view.activeStart
-      let end = calendarApi.view.activeEnd
       let year_start = new Date(calendarApi.view.activeStart).getFullYear()
       let year_end = new Date(calendarApi.view.activeEnd).getFullYear()
-      // if (year_start < year_end && year_end == parseInt(this.date.slice(4,8))) {
-      //   console.log("moved forward to new year")
-      // }
-      // if (year_start < year_end && year_start == parseInt(this.date.slice(4,8))) {
-      //   console.log("moved backward to previous year")
-      // }
+      // console.log(year_start, year_end)
+      if (year_end - year_start <= 1) {
+        year_end += 1
+      }
       let new_start = new Date((year_start - 1).toString() + "/12/15")
       let new_end = new Date((year_end).toString() + "/01/15")
-      console.log(year_start, year_end, parseInt(this.date.slice(4,8)))
+      // console.log(year_start, year_end, parseInt(this.date.slice(4,8)))
+      // console.log(new_start, new_end)
       await APIService.return_shifts({"start": new_start, "end": new_end})
       .then(res => {
         // console.log(res.data)

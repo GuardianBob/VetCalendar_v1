@@ -176,6 +176,7 @@ export default defineComponent({
         eventDisplay: 'block', // Highlights events with colored bar
         eventColor: 'white',
         eventTextColor: 'black',
+        // eventBorderColor: 'primary',
         events: [
           { }
         ]

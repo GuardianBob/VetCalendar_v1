@@ -247,7 +247,7 @@ export default defineComponent({
     },
     date(newValue, oldValue) {
       // console.log(newValue, oldValue)
-      this.handleMonthChange()
+      this.handleMonthChange(newValue, oldValue)
     },
   },
   computed: {
@@ -285,15 +285,29 @@ export default defineComponent({
       })
     },
 
-    async handleMonthChange(){
-      // console.log("handleMonthChange")
+    async handleMonthChange(newValue, oldValue){
       let calendarApi = this.$refs.fullCalendar.getApi()
       let new_date = new Date('01 ' + this.date)
-      // calendarApi.gotoDate(new_date.toISOString())
-      await this.getShifts()
-      if (this.user) {
-        this.filterShifts()
+      calendarApi.gotoDate(new_date.toISOString())
+      console.log(newValue, oldValue)
+      if (newValue.slice(0,3) == "Jan" && oldValue.slice(0,3) == "Dec" && newValue.slice(4,8) > oldValue.slice(4,8)) {
+        console.log("moved forward year")
+        await this.getShiftsYear()
+        if (this.user) {
+          this.filterShifts()
+        }
       }
+      if (newValue.slice(0,3) == "Dec" && oldValue.slice(0,3) == "Jan" && newValue.slice(4,8) < oldValue.slice(4,8)) {
+        console.log("moved backward year")
+        await this.getShiftsYear()
+        if (this.user) {
+          this.filterShifts()
+        }
+      }
+      // await this.getShiftsYear()
+      // if (this.user) {
+      //   this.filterShifts()
+      // }
       // console.log(this.calendarOptions.events.length)
     },
 
@@ -333,7 +347,7 @@ export default defineComponent({
             })
           }
         })        
-        this.getShifts()
+        this.getShiftsYear()
         this.clearFile()
         this.clearFilters()
       }
@@ -344,6 +358,48 @@ export default defineComponent({
       let start = calendarApi.view.activeStart
       let end = calendarApi.view.activeEnd
       await APIService.return_shifts({"start": start, "end": end})
+      .then(res => {
+        // console.log(res.data)
+        if (res.data != "No Shifts"){
+          this.calendarOptions.events = []
+          this.shifts = []
+          // console.log(events)
+          this.users = res.data.users
+          res.data.shifts.map(event => { 
+            // console.log(event)
+            this.calendarOptions.events.push({
+              // Add event to displayed calendar
+              "title": event["user"],
+              "start": event["start"],
+              // "end": shift["end"]["dateTime"],
+            })
+            this.shifts.push({
+              // Add event to displayed calendar
+              "title": event["user"],
+              "start": event["start"],
+              // "end": shift["end"]["dateTime"],
+            })
+          })
+          // 
+        }
+      })
+      // console.log(this.shifts)
+      calendarApi.updateSize()
+    },
+
+    async getShiftsYear() {
+      let calendarApi = this.$refs.fullCalendar.getApi()
+      let year_start = new Date(calendarApi.view.activeStart).getFullYear()
+      let year_end = new Date(calendarApi.view.activeEnd).getFullYear()
+      // console.log(year_start, year_end)
+      if (year_end - year_start <= 1) {
+        year_end += 1
+      }
+      let new_start = new Date((year_start - 1).toString() + "/12/15")
+      let new_end = new Date((year_end).toString() + "/01/15")
+      // console.log(year_start, year_end, parseInt(this.date.slice(4,8)))
+      // console.log(new_start, new_end)
+      await APIService.return_shifts({"start": new_start, "end": new_end})
       .then(res => {
         // console.log(res.data)
         if (res.data != "No Shifts"){
@@ -476,7 +532,7 @@ export default defineComponent({
           this.users = res.data["users"]
           this.show_users = true
           this.loading = false
-          this.getShifts()
+          this.getShiftsYear()
         })
       }
     },
@@ -1077,7 +1133,7 @@ export default defineComponent({
     this.get_stored_gmail();
     this.gapiLoaded()
     this.gisLoaded()
-    this.getShifts().then(() => {
+    this.getShiftsYear().then(() => {
       if (this.user) {
         this.filterShifts()
       }

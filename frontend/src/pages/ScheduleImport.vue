@@ -143,9 +143,9 @@ export default defineComponent({
           prev: {
             text: "PREV",
             click: () => {
+              // console.log("eventPrev");
               let calendarApi = this.$refs.fullCalendar.getApi();
               calendarApi.prev();
-              // console.log("eventPrev", calendarApi.getDate());
               this.handleCalendarChange(calendarApi.getDate().toString())
             }
           },
@@ -161,7 +161,7 @@ export default defineComponent({
           today: { // this overrides the next button
             text: "Today",
             click: () => {
-                // console.log("eventNext");
+                // console.log("eventToday");
                 let calendarApi = this.$refs.fullCalendar.getApi();
                 calendarApi.today();
                 this.handleCalendarChange(calendarApi.getDate().toString())
@@ -264,6 +264,7 @@ export default defineComponent({
     },
 
     async handleRightSwipe() {      
+      // console.log("handleRightSwipe")
       let calendarApi = this.$refs.fullCalendar.getApi();
       calendarApi.prev();
       let new_date =  calendarApi.getDate().toString()
@@ -274,6 +275,7 @@ export default defineComponent({
     },
 
     async handleLeftSwipe() {
+      // console.log("handleLeftSwipe")
       let calendarApi = this.$refs.fullCalendar.getApi();
       calendarApi.next();
       let new_date =  calendarApi.getDate().toString()
@@ -284,9 +286,10 @@ export default defineComponent({
     },
 
     async handleMonthChange(){
+      // console.log("handleMonthChange")
       let calendarApi = this.$refs.fullCalendar.getApi()
       let new_date = new Date('01 ' + this.date)
-      calendarApi.gotoDate(new_date.toISOString())
+      // calendarApi.gotoDate(new_date.toISOString())
       await this.getShifts()
       if (this.user) {
         this.filterShifts()
@@ -296,8 +299,8 @@ export default defineComponent({
 
     async handleCalendarChange(cal_date){
       let new_date = cal_date.slice(4, 7) + " " + cal_date.slice(11, 15)
-      // console.log(new_date)
       this.date = new_date
+      // console.log("handleCalendarChange")
       // let body = {}
       // body["date"] = this.date      
       // APIService.return_shifts(this.date)
@@ -371,7 +374,7 @@ export default defineComponent({
     },
 
     async filterShifts() {
-      console.log(this.user)
+      // console.log(this.user)
       this.calendarOptions.events = []
       this.shifts.map(shift => {
         if (shift["title"] == this.user){

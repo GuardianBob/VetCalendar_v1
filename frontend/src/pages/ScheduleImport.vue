@@ -98,7 +98,7 @@
         </q-form>
       <!-- </div> -->
     <div class="row align-start justify-center">
-      <div id="test_add" class="col-10 col-md-10 col-sm-8 col-lg-6 col-xs-11 q-mx-sm text-center" style="max-height: fit-content;">
+      <div v-touch-swipe.mouse.right="handleRightSwipe" v-touch-swipe.mouse.left="handleLeftSwipe" class="col-10 col-md-10 col-sm-8 col-lg-6 col-xs-11 q-mx-sm text-center" style="max-height: fit-content;">
         <FullCalendar id="fullCalendar" ref="fullCalendar" :custom-buttons="customButtons" :options='calendarOptions'/>
       </div>
     </div>
@@ -260,6 +260,26 @@ export default defineComponent({
       let day_date = date.slice(8, 10)
       let date_string = `${day} - ${month} ${day_date} ${date.slice(0,4)} - ${date.slice(11, 16)}`
       return date_string
+    },
+
+    async handleRightSwipe() {      
+      let calendarApi = this.$refs.fullCalendar.getApi();
+      calendarApi.prev();
+      let new_date =  calendarApi.getDate().toString()
+      // console.log("eventPrev", calendarApi.getDate());
+      this.handleCalendarChange(new_date, -1)
+      // this.panel = this.panel - 1
+
+    },
+
+    async handleLeftSwipe() {
+      let calendarApi = this.$refs.fullCalendar.getApi();
+      calendarApi.next();
+      let new_date =  calendarApi.getDate().toString()
+      this.handleCalendarChange(new_date, 1)
+      .then(() => {
+        // this.panel = this.panel + 1
+      })
     },
 
     async handleMonthChange(){

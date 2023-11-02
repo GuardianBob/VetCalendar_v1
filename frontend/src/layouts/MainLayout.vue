@@ -40,8 +40,8 @@
       </q-list>
     </q-drawer>
 
-    <q-page-container>
-      <router-view />
+    <q-page-container >
+      <router-view @click="drawer = false" />
     </q-page-container>
   </q-layout>
 </template>

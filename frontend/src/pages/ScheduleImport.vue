@@ -289,7 +289,7 @@ export default defineComponent({
       let calendarApi = this.$refs.fullCalendar.getApi()
       let new_date = new Date('01 ' + this.date)
       calendarApi.gotoDate(new_date.toISOString())
-      console.log(newValue, oldValue)
+      // console.log(newValue, oldValue)
       if (newValue.slice(0,3) == "Jan" && oldValue.slice(0,3) == "Dec" && newValue.slice(4,8) > oldValue.slice(4,8)) {
         console.log("moved forward year")
         await this.getShiftsYear()

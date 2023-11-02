@@ -18,6 +18,7 @@ load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+# BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 # Quick-start development settings - unsuitable for production
@@ -41,27 +42,35 @@ ALLOWED_HOSTS = [
     "jbearcreations.com",
     "vet-cal.jmeyer-dev.com",  # MUST INCLUDE DOMAIN to avoid CORS issues
     "vet-backend.jmeyer-dev.com",  # MUST INCLUDE DOMAIN to avoid CORS issues
+    "vet-cal-dev.jmeyer-dev.com",  # MUST INCLUDE DOMAIN to avoid CORS issues
+    "vet-backend-dev.jmeyer-dev.com",  # MUST INCLUDE DOMAIN to avoid CORS issues
 ]
 
 CORS_ORIGIN_WHITELIST = [
     'http://localhost:9000',
     'http://127.0.0.1:9000',
+    'http://127.0.0.1:8000',
     'http://localhost',
     "https://jmeyer-dev.com", 
     "https://jbear-creations.com", 
     "https://jbearcreations.com",
     "https://vet-cal.jmeyer-dev.com",
     "https://vet-backend.jmeyer-dev.com",
+    "https://vet-cal-dev.jmeyer-dev.com",
+    "https://vet-backend-dev.jmeyer-dev.com",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:9000/*',
     'http://*.127.0.0.1',
+    'http://*.127.0.0.1:8000/*',
     "https://jmeyer-dev.com/*", 
     "https://jbear-creations.com/*", 
     "https://jbearcreations.com/*",
     "https://vet-cal.jmeyer-dev.com/*",
     "https://vet-backend.jmeyer-dev.com/*",
+    "https://vet-cal-dev.jmeyer-dev.com/*",
+    "https://vet-backend-dev.jmeyer-dev.com/*",
 ]
     
 
@@ -116,23 +125,27 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    },
-    # 'default': { # MySQL Settings
-    #     'ENGINE': 'django.db.backends.mysql',
-    #     'NAME': os.getenv('DB_TABLE'),
-    #     'USER': os.getenv('DB_USER'),
-    #     'PASSWORD': os.getenv('DB_PASS'),
-    #     'HOST': 'localhost',
-    #     'PORT': '3306',
-    #     'OPTIONS': {  
-    #         'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"  
-    #     }
-    # }
-}
+if os.getenv('DEBUG') == "True":
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        },
+    }
+else:
+    DATABASES = {
+        'default': { # MySQL Settings
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.getenv('DB_TABLE'),
+            'USER': os.getenv('DB_USER'),
+            'PASSWORD': os.getenv('DB_PASS'),
+            'HOST': 'localhost',
+            'PORT': '3306',
+            'OPTIONS': {  
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"  
+            }
+        }
+    }
 
 
 # Password validation
@@ -159,7 +172,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'America/Los_Angeles' # 'UTC'
+# TIME_ZONE =  'UTC'
+TIME_ZONE =  'America/Los_Angeles'
 
 USE_I18N = True
 

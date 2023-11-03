@@ -33,7 +33,7 @@
                 </q-btn>
               </div>
               <div class="col-10">
-                  Click to sync the schedule to your Google calendar.
+                  Click to sync the current month of the schedule to your Google calendar.
               </div>
             </div>
             <div class="row items-center justify-around">

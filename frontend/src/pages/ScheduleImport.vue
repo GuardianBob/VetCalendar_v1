@@ -5,8 +5,40 @@
       @submit="upload_shifts_v2">
       <div class="row align-start justify-center q-mx-sm items-center">
         <!-- <q-input filled v-model="gmail" required type="email" label="Gmail"></q-input> -->
-          <div class="col-4 q-ml-sm">
-            
+          <div v-if="$q.platform.is.mobile" class="col-1 q-mx-sm">
+            <q-btn-dropdown color="accent q-pa-sm" rounded dropdown-icon="more_vert" content-style='width: 75%'> 
+              <q-list>
+                <q-item class="column">
+                  <q-btn class="q-mx-xs" color="primary" size="md" id="enable_file" v-close-popup @click="enable_file = !enable_file">
+                    <q-icon name="attach_file" class="q-mr-xs"/> Upload File
+                    <q-tooltip class="bg-accent" anchor="bottom middle">Upload File</q-tooltip>
+                  </q-btn>
+                </q-item>          
+                <q-item class="column" v-if="!auth_token">
+                  <q-btn class="outline q-mx-xs" size="md" id="authorize_button" v-close-popup @click="handleAuthClick" v-show="!auth_token">
+                    <img width="20" src="~assets/Google_G_Logo.svg" alt="" class="q-mr-xs"> Connect to Google
+                    <q-tooltip class="bg-accent" anchor="bottom middle">Connect to Google</q-tooltip>
+                  </q-btn>
+                </q-item>
+                <q-item class="column" v-if="auth_token" >
+                  <q-btn class="q-mx-xs" color="accent" size="md" id="fetch_calendars" v-close-popup @click="sync_google">
+                    <q-icon name="sync" class="q-mr-xs"/>
+                    Sync Google Calendar
+                    <q-tooltip class="bg-accent" anchor="bottom middle">Sync Google Calendar</q-tooltip>
+                  </q-btn>
+                </q-item>
+                <q-item class="column">
+                  <q-btn class="q-mx-sm" color="primary" size="md" id="enable_file" v-close-popup @click="info = true">
+                    <q-icon name="question_mark" class="q-mr-xs" />
+                    Help
+                    <q-tooltip class="bg-accent" anchor="bottom middle">Help</q-tooltip>
+                  </q-btn>
+                </q-item>
+              </q-list>
+            </q-btn-dropdown> 
+            <!-- <q-input filled v-model="date" label="Select Date" class="q-my-sm" v-show="enable_date"></q-input> -->
+          </div>
+          <div v-if="$q.platform.is.desktop" class="col-4 q-ml-sm">            
             <q-btn class="q-mr-xs" color="primary" round size="sm" id="enable_file" @click="enable_file = !enable_file">
               <q-icon name="attach_file" />
               <q-tooltip class="bg-accent" anchor="bottom middle">Upload File</q-tooltip>
@@ -25,9 +57,9 @@
             </q-btn>
             <!-- <q-input filled v-model="date" label="Select Date" class="q-my-sm" v-show="enable_date"></q-input> -->
           </div>
-          <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3"></div>
-          <div class="col-1 text-right q-mr-sm">
-            <q-btn color="primary" round size="sm" id="enable_date" @click="enable_date = !enable_date" icon="event">
+          <div class="col-lg-3 col-md-3 col-sm-3 col-xs-0"></div>
+          <div class="col-1 q-mx-md text-right">
+            <q-btn color="primary" round :size="button_size" id="enable_date" @click="enable_date = !enable_date" icon="event">
               <!-- <q-icon name="event" /> -->
               <q-tooltip class="bg-accent" anchor="bottom middle">Select Date</q-tooltip>
               <q-popup-proxy cover transition-show="scale" transition-hide="scale">
@@ -39,8 +71,8 @@
               </q-popup-proxy>
             </q-btn>
           </div>
-          <div class="col-xs-3 col-lg-2 col-md-2 col-sm-2 q-mr-sm">          
-            <q-select class="q-mx-none" v-model="user" :options="users" dense options-dense @update:model-value="filterShifts()">
+          <div class="col-xs-8 col-lg-2 col-md-2 col-sm-2 q-mr-sm">          
+            <q-select class="q-mx-sm" v-model="user" :options="users" dense options-dense @update:model-value="filterShifts()">
               <template v-slot:prepend>
                 <q-icon name="filter_alt" round color="primary"/>
               </template>
@@ -71,7 +103,7 @@
         </q-file>
         </div>
         <div class="col-1 text-center">
-        <q-btn class="q-mx-sm" size="sm" color="primary" round id="upload_button" @click="file_upload" v-show="file">
+        <q-btn class="q-mx-sm" size="md" color="primary" round id="upload_button" @click="file_upload" v-show="file">
           <q-icon name="upload"></q-icon>
           <q-tooltip class="bg-accent">Upload File</q-tooltip>
         </q-btn>
@@ -118,7 +150,7 @@ import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import ButtonDefinitions from 'components/ButtonDefinitions.vue'
 
-const quasar = useQuasar()
+
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID
 const API_KEY = process.env.GOOGLE_API_KEY
 // Discovery doc URL for APIs used by the quickstart
@@ -184,7 +216,7 @@ export default defineComponent({
     }
   },
   setup() {
-    
+    const $q = useQuasar()
     const progress = ref(false)
     
     return {
@@ -211,6 +243,7 @@ export default defineComponent({
       enable_file: ref(false),
       enable_date: ref(false),
       info: ref(false),
+      button_size: ref('sm'),
       // onFileSelected(file) {
       //   this.file = file
       //   console.log(file)
@@ -1059,6 +1092,9 @@ export default defineComponent({
   created() {
     if (localStorage.getItem("filtered_user")) {
       this.user = localStorage.getItem("filtered_user")
+    }
+    if (this.$q.platform.is.mobile) {
+      this.button_size = 'md'
     }
   },
   

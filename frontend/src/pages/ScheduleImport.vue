@@ -497,7 +497,8 @@ export default defineComponent({
       let tz_offset =  (new Date()).getTimezoneOffset() * 60000
       let date_start = new Date(`01 ${this.date}`)
       let date_end = new Date(date_start.getFullYear(), date_start.getMonth()+1, 0, 23, 59)
-      let end = new Date(date_end - tz_offset).toISOString().slice(0,-5) + "Z"
+      let end = new Date(date_end).toISOString().slice(0,-5) + "Z"
+      console.log(end)
       return end
     },
 
@@ -833,10 +834,15 @@ export default defineComponent({
           await this.clear_google_events();
           var batch = gapi.client.newBatch();
           this.disabled = true
-          console.log(this.user)
-          this.calendarOptions.events.forEach((event) => {
+          // console.log(this.user)
+          let date_month = new Date("01 " + this.date).getMonth()
+          // console.log(date_month)
+          const cal_events = this.calendarOptions.events.filter(event => new Date(event.start).getMonth() == date_month)
+          // console.log(cal_events)
+          cal_events.forEach((event) => { // Update this, it syncs entire year to calendar.
+            // console.log(new Date(event.start).getMonth())
             let shift_start = event.start.replace(/ /g, 'T')
-            console.log(event.title, shift_start)
+            // console.log(event.title, shift_start)
             let shift = {
               "summary": event.title,
               "start": {
@@ -862,7 +868,7 @@ export default defineComponent({
           batch.then(() => {
             this.loading = false
             this.submit_button = false
-            this.clearFilters()
+            // this.clearFilters()
             // this.user_shifts = []
             console.log('all jobs done!!!')
             Notify.create({

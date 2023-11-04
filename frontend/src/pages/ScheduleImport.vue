@@ -149,6 +149,7 @@ import APIService from "../../services/api"
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import ButtonDefinitions from 'components/ButtonDefinitions.vue'
+import MainService from '../../services/MainService'
 
 
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID
@@ -345,11 +346,12 @@ export default defineComponent({
     },
 
     async handleCalendarChange(cal_date){
-      let new_date = cal_date.slice(4, 7) + " " + cal_date.slice(11, 15)
+      let new_date = cal_date.slice(11, 15) + " " + cal_date.slice(4, 7)
       this.date = new_date
-      // console.log("handleCalendarChange")
-      // let body = {}
-      // body["date"] = this.date      
+      let newPath = MainService.update_path_date(cal_date)
+      // console.log(newPath)
+      // console.log(this.$route.query.user)
+      this.$router.replace({ path: newPath, query: this.$route.query })
       // APIService.return_shifts(this.date)
     },
 
@@ -462,14 +464,34 @@ export default defineComponent({
       calendarApi.updateSize()
     },
 
+    async set_view() {
+      let view_date = MainService.view_date()
+      let month = this.date.slice(0, 3)
+      if (view_date != null){
+        if (view_date.month) {
+          month = view_date.month
+        }
+        console.log("month: ", month)
+        this.date = view_date.year + " " + month
+        if (this.$route.query.user){
+          console.log(this.$route.query.user)
+          this.user = this.$route.query.user
+          this.filterShifts()
+        } else {
+          console.log("No query")
+        }
+      }
+    },
+
     async filterShifts() {
-      // console.log(this.user)
+      console.log(this.user)
       this.calendarOptions.events = []
       this.shifts.map(shift => {
         if (shift["title"] == this.user){
           // console.log("matches")
           this.calendarOptions.events.push(shift)
           localStorage.setItem("filtered_user", this.user)
+          this.$router.replace({ query: { user: this.user } })
         }
       })
     },
@@ -479,6 +501,7 @@ export default defineComponent({
       // console.log(this.shifts.length)
       this.user = null
       localStorage.removeItem("filtered_user")
+      this.$router.replace({ query: null })
     },
 
     async clearFile() {
@@ -1175,6 +1198,7 @@ export default defineComponent({
     this.get_stored_gmail();
     this.gapiLoaded()
     this.gisLoaded()
+    this.set_view()
     this.getShiftsYear().then(() => {
       if (this.user) {
         this.filterShifts()

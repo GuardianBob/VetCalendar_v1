@@ -6,7 +6,15 @@ const routes = [
     children: [
       { path: '', component: () => import('pages/IndexPage.vue') },
       { path: '/login', component: () => import('pages/LoginPage.vue') },
-      { path: '/schedule_import', component: () => import('pages/ScheduleImport.vue') },
+      { 
+        path: '/schedule_import', 
+        component: () => import('pages/ScheduleImport.vue') ,
+        alias: [
+          '/schedule_import/:year*', 
+          '/schedule_import/:year*/:month*', 
+          '/schedule_import/:year*/:month*/:user*'
+        ],
+      },
     ]
   },
 

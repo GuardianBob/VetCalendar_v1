@@ -492,13 +492,11 @@ export default defineComponent({
         }
         // console.log("month: ", month)
         this.date = view_date.year + " " + month
-        if (this.$route.query.user){
-          // console.log(this.$route.query.user)
-          this.user = this.$route.query.user
-          this.filterShifts()
-        } else {
-          // console.log("No query")
-        }
+      } 
+      if (this.$route.query.user){
+        // console.log(this.$route.query.user)
+        this.user = this.$route.query.user
+        this.filterShifts()
       }
     },
 

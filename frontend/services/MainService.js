@@ -22,7 +22,7 @@ class MainService {
     let pathArray = window.location.pathname.split('/');
     pathArray = pathArray.filter(path => path != "")
     if (pathArray.length > 2) {
-      console.log(pathArray.length, pathArray)
+      // console.log(pathArray.length, pathArray)
       return { year: pathArray[1], month: pathArray[2]}
     } else if (pathArray.length == 2 ) {
       return { year: pathArray[1]}

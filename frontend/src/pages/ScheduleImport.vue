@@ -28,6 +28,13 @@
                   </q-btn>
                 </q-item>
                 <q-item class="column">
+                  <q-btn class="q-mx-sm" color="primary" size="md" id="enable_file" v-close-popup @click="share_view">
+                    <q-icon name="share" class="q-mr-xs" />
+                    Share View
+                    <q-tooltip class="bg-accent" anchor="bottom middle">Share View</q-tooltip>
+                  </q-btn>
+                </q-item>
+                <q-item class="column">
                   <q-btn class="q-mx-sm" color="primary" size="md" id="enable_file" v-close-popup @click="info = true">
                     <q-icon name="question_mark" class="q-mr-xs" />
                     Help
@@ -50,6 +57,10 @@
             </q-btn>
             <q-btn v-if="auth_token" class="q-mr-xs" color="accent" size="sm" round id="fetch_calendars" @click="sync_google" icon="sync">
               <q-tooltip class="bg-accent" anchor="bottom middle">Sync to Google Calendar</q-tooltip>
+            </q-btn>
+            <q-btn class="q-mr-xs" color="primary" round size="sm" id="enable_file" @click="share_view">
+              <q-icon name="share" />
+              <q-tooltip class="bg-accent" anchor="bottom middle">Share View</q-tooltip>
             </q-btn>
             <q-btn class="" color="primary" round size="sm" id="enable_file" @click="info = true">
               <q-icon name="question_mark" />
@@ -345,6 +356,14 @@ export default defineComponent({
       // console.log(this.calendarOptions.events.length)
     },
 
+    async share_view() {
+      var copyURL = window.location.href;
+      console.log(window.location.href)
+      // copyURL.select();
+      // copyURL.setSelectionRange(0, 99999); /* For mobile devices */
+      navigator.clipboard.writeText(window.location.href);
+    },
+
     async handleCalendarChange(cal_date){
       let new_date = cal_date.slice(11, 15) + " " + cal_date.slice(4, 7)
       this.date = new_date
@@ -471,20 +490,20 @@ export default defineComponent({
         if (view_date.month) {
           month = view_date.month
         }
-        console.log("month: ", month)
+        // console.log("month: ", month)
         this.date = view_date.year + " " + month
         if (this.$route.query.user){
-          console.log(this.$route.query.user)
+          // console.log(this.$route.query.user)
           this.user = this.$route.query.user
           this.filterShifts()
         } else {
-          console.log("No query")
+          // console.log("No query")
         }
       }
     },
 
     async filterShifts() {
-      console.log(this.user)
+      // console.log(this.user)
       this.calendarOptions.events = []
       this.shifts.map(shift => {
         if (shift["title"] == this.user){

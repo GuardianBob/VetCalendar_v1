@@ -16,6 +16,7 @@
                 Click to enable file selection and upload.  Use this to upload a new schedule.
               </div>
             </div>
+            <hr>
             <div class="row items-center justify-around">
               <div class="col-1">
                 <q-btn class="outline q-pa-none" round dense id="authorize_button">
@@ -26,6 +27,7 @@
                   Click to connect the schedule app to your Google account to allow you to sync the schedule to your Google calendar.  
               </div>
             </div>
+            <hr>
             <div class="row items-center justify-around">
               <div class="col-1">
                 <q-btn class="q-ma-xs" color="accent" round size="sm">
@@ -36,6 +38,18 @@
                   Click to sync the current month of the schedule to your Google calendar.
               </div>
             </div>
+            <hr>
+            <div class="row items-center justify-around">
+              <div class="col-1">
+                <q-btn class="q-ma-xs" color="primary" round size="sm">
+                  <q-icon name="share" />
+                </q-btn>
+              </div>
+              <div class="col-10">
+                  Click to copy the URL for the current displayed calendar view (date range and filtered user) to share the link with others.
+              </div>
+            </div>
+            <hr>
             <div class="row items-center justify-around">
               <div class="col-1">
                 <q-btn class="q-ma-xs" color="primary" round size="sm">
@@ -43,9 +57,10 @@
                 </q-btn>
               </div>
               <div class="col-10">
-                  Click to sync the schedule to your Google calendar.
+                  Click to select a date from the calendar date-picker.
               </div>
             </div>
+            <hr>
             <div class="row items-center justify-around">
               <div class="col-1">
                 <q-btn class="q-ma-xs" color="primary" round size="sm" id="authorize_button">
@@ -56,6 +71,7 @@
                 Click to filter the calendar to display only the selected user.
               </div>
             </div>
+            <hr>
           </q-card-section>
           <q-card-section> 
             <div class="text-right">

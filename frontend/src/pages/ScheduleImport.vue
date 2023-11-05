@@ -357,11 +357,17 @@ export default defineComponent({
     },
 
     async share_view() {
-      var copyURL = window.location.href;
-      console.log(window.location.href)
+      // var copyURL = window.location.href;
+      // console.log(window.location.href)
       // copyURL.select();
       // copyURL.setSelectionRange(0, 99999); /* For mobile devices */
       navigator.clipboard.writeText(window.location.href);
+      Notify.create({
+        message: "URL copied to clipboard",
+        color: "green",
+        position: 'center',
+        timeout: 300,
+      })
     },
 
     async handleCalendarChange(cal_date){

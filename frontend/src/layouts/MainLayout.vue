@@ -58,12 +58,12 @@ const linksList = [
     icon: 'home',
     link: '/'
   },
-  {
-    title: 'Schedule Import',
-    caption: '',
-    icon: 'code',
-    link: '/schedule_import'
-  },
+  // {
+  //   title: 'Schedule Import',
+  //   caption: '',
+  //   icon: 'code',
+  //   link: '/schedule_import'
+  // },
   // {
   //   title: 'Discord Chat Channel',
   //   caption: 'chat.quasar.dev',

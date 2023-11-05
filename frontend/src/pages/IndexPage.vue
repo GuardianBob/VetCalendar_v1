@@ -9,7 +9,7 @@
     <div>
       <!-- <q-btn class="q-px-auto dense" color="primary" to="/login">Get Form</q-btn> -->
     </div>
-    <q-btn class="q-px-auto dense" color="primary" to="/schedule_import">Import Schedule</q-btn>
+    <q-btn class="q-px-auto dense" color="primary" to="/schedule_import">Schedule</q-btn>
   </q-page>
 </template>
 

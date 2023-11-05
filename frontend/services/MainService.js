@@ -5,11 +5,12 @@ class MainService {
     let year = date.slice(11, 15)
     let month = date.slice(4, 7)
     let pathArray = window.location.pathname.split('/');
+    pathArray = pathArray.filter(path => path != "")
     // console.log(pathArray)
-    pathArray[2] = year
-    pathArray[3] = month
+    pathArray[0] = year
+    pathArray[1] = month
     let newPath = ""
-    for (let i = 1; i < pathArray.length; i++) {
+    for (let i = 0; i < pathArray.length; i++) {
       newPath += "/";
       newPath += pathArray[i];
     }
@@ -21,11 +22,11 @@ class MainService {
   view_date () {
     let pathArray = window.location.pathname.split('/');
     pathArray = pathArray.filter(path => path != "")
-    if (pathArray.length > 2) {
+    if (pathArray.length > 1) {
       // console.log(pathArray.length, pathArray)
-      return { year: pathArray[1], month: pathArray[2]}
-    } else if (pathArray.length == 2 ) {
-      return { year: pathArray[1]}
+      return { year: pathArray[0], month: pathArray[1]}
+    } else if (pathArray.length == 1 ) {
+      return { year: pathArray[0]}
     } else {
       return null
     }

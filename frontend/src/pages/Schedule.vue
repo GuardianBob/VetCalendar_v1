@@ -234,7 +234,8 @@ export default defineComponent({
     return {
       // label: "Select File",
       file: ref(null),
-      date: ref(new Date().toLocaleString('en-US', { month: 'short', year: 'numeric' })),
+      file_date: ref(null),
+      date: ref(`${new Date().toLocaleString('en-US', { year: 'numeric' })} ${new Date().toLocaleString('en-US', { month: 'short' })}`),
       calendar_button: ref(false),
       tokenClient: null,
       gapiInited: false,
@@ -271,8 +272,9 @@ export default defineComponent({
     file(newValue, oldValue) {
       if (newValue != null) {
         console.log("triggered")
+        console.log(this.date)
         let new_month = ""
-        let new_year = parseInt(this.date.slice(-4))
+        let new_year = parseInt(this.date.slice(0, 4))
         let file_name = newValue["name"].toLowerCase()
         console.log(file_name)
         month_abbrev.forEach((month) => {
@@ -280,14 +282,27 @@ export default defineComponent({
             console.log(month)
             new_month = month
           }        
-        })      
-        if (file_name.includes(new_year + 1)) {
-          new_year = (new_year + 1).toString()
-        }
-        this.date = new_month + " " + new_year.toString()
+        })
+        console.log(new_year)    
+        if (!file_name.includes(new_year)) {
+          if (file_name.includes(new_year + 1)) {
+            new_year = (new_year + 1).toString()
+          } else {
+            Notify.create({
+              message: "Something went wrong, please check the current calendar date and compare it with the date of the file you are trying to upload.",
+              color: "red",
+              position: 'center',
+              timeout: 3000,
+            })
+          }
+        } 
+        this.date = new_year.toString() + " " + new_month
+        this.file_date = new_month + " " + new_year.toString()
         console.log(new_year)
         // this.user = null
         // this.get_users()      
+      } else {
+        this.file_date = null
       }
     },
     date(newValue, oldValue) {
@@ -372,6 +387,7 @@ export default defineComponent({
 
     async handleCalendarChange(cal_date){
       let new_date = cal_date.slice(11, 15) + " " + cal_date.slice(4, 7)
+      console.log(this.date)
       this.date = new_date
       let newPath = MainService.update_path_date(cal_date)
       // console.log(newPath)
@@ -387,8 +403,9 @@ export default defineComponent({
         localStorage.setItem("gmail", this.gmail)
         let formData = new FormData()
         let file = this.file
+        console.log(this.date)
         await formData.append("file", file)
-        await formData.append("date", this.date)
+        await formData.append("date", this.file_date)
         await APIService.upload_file(formData)
         .then((res) => {
           if (res.status == 200) {
@@ -508,6 +525,7 @@ export default defineComponent({
     async clearFile() {
       this.file = null
       this.enable_file = false
+      this.file_date = null
     },
 
     async timeMin() {
@@ -579,7 +597,7 @@ export default defineComponent({
           console.log(this.date, res.data["month"])
           if (res.data["month"] != "false"){
             if (!this.date.includes(res.data["month"])){
-              this.date = res.data["month"] + this.date.slice(3)
+              this.date = this.date.slice(3) + res.data["month"]
               let new_date = new Date('01 ' + res.data["month"] + this.date.slice(3))
               console.log(new_date.toISOString())
               calendarApi.gotoDate(new_date.toISOString())

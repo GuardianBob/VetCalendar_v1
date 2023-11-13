@@ -409,42 +409,16 @@ export default defineComponent({
         })        
         this.getShiftsYear()
         this.clearFile()
-        this.clearFilters()
+        // this.clearFilters()
       }
     },
 
     async getShifts() {
       let calendarApi = this.$refs.fullCalendar.getApi()
-      let start = calendarApi.view.activeStart
-      let end = calendarApi.view.activeEnd
-      await APIService.return_shifts({"start": start, "end": end})
-      .then(res => {
-        // console.log(res.data)
-        if (res.data != "No Shifts"){
-          this.calendarOptions.events = []
-          this.shifts = []
-          // console.log(events)
-          this.users = res.data.users
-          res.data.shifts.map(event => { 
-            // console.log(event)
-            this.calendarOptions.events.push({
-              // Add event to displayed calendar
-              "title": event["user"],
-              "start": event["start"],
-              // "end": shift["end"]["dateTime"],
-            })
-            this.shifts.push({
-              // Add event to displayed calendar
-              "title": event["user"],
-              "start": event["start"],
-              // "end": shift["end"]["dateTime"],
-            })
-          })
-          // 
-        }
-      })
-      // console.log(this.shifts)
-      calendarApi.updateSize()
+      await this.getShiftsAPI(
+        new Date(calendarApi.view.activeStart).toISOString().split('T')[0],
+        new Date(calendarApi.view.activeEnd).toISOString().split('T')[0]
+      )
     },
 
     async getShiftsYear() {
@@ -459,34 +433,38 @@ export default defineComponent({
       let new_end = new Date((year_end).toString() + "/01/15")
       // console.log(year_start, year_end, parseInt(this.date.slice(4,8)))
       // console.log(new_start, new_end)
-      await APIService.return_shifts({"start": new_start, "end": new_end})
-      .then(res => {
-        // console.log(res.data)
-        if (res.data != "No Shifts"){
-          this.calendarOptions.events = []
-          this.shifts = []
-          // console.log(events)
-          this.users = res.data.users
-          res.data.shifts.map(event => { 
-            // console.log(event)
-            this.calendarOptions.events.push({
-              // Add event to displayed calendar
-              "title": event["user"],
-              "start": event["start"],
-              // "end": shift["end"]["dateTime"],
-            })
-            this.shifts.push({
-              // Add event to displayed calendar
-              "title": event["user"],
-              "start": event["start"],
-              // "end": shift["end"]["dateTime"],
-            })
-          })
-          // 
-        }
-      })
+      await this.getShiftsAPI(new_start, new_end)
       // console.log(this.shifts)
       calendarApi.updateSize()
+    },
+
+    async getShiftsAPI(start, end) {
+      await APIService.return_shifts({ "start": start, "end": end })
+        .then(res => {
+          // console.log(res.data)
+          if (res.data != "No Shifts") {
+            this.calendarOptions.events = []
+            this.shifts = []
+            // console.log(events)
+            this.users = res.data.users
+            res.data.shifts.map(event => {
+              // console.log(event)
+              this.calendarOptions.events.push({
+                // Add event to displayed calendar
+                "title": event["user"],
+                "start": event["start"],
+                // "end": shift["end"]["dateTime"],
+              })
+              this.shifts.push({
+                // Add event to displayed calendar
+                "title": event["user"],
+                "start": event["start"],
+                // "end": shift["end"]["dateTime"],
+              })
+            })
+            // 
+          }
+        })      
     },
 
     async set_view() {
@@ -513,7 +491,7 @@ export default defineComponent({
         if (shift["title"] == this.user){
           // console.log("matches")
           this.calendarOptions.events.push(shift)
-          localStorage.setItem("filtered_user", this.user)
+          // localStorage.setItem("filtered_user", this.user)
           this.$router.replace({ query: { user: this.user } })
         }
       })
@@ -523,7 +501,7 @@ export default defineComponent({
       this.calendarOptions.events = this.shifts
       // console.log(this.shifts.length)
       this.user = null
-      localStorage.removeItem("filtered_user")
+      // localStorage.removeItem("filtered_user")
       this.$router.replace({ query: null })
     },
 
@@ -1201,9 +1179,9 @@ export default defineComponent({
   },
 
   created() {
-    if (localStorage.getItem("filtered_user")) {
-      this.user = localStorage.getItem("filtered_user")
-    }
+    // if (localStorage.getItem("filtered_user")) {
+    //   this.user = localStorage.getItem("filtered_user")
+    // }
     if (this.$q.platform.is.mobile) {
       this.button_size = 'md'
     }
@@ -1218,10 +1196,11 @@ export default defineComponent({
     });
     this.gisInited = true;
     this.maybeEnableButtons();
-    this.get_stored_gmail();
+    // this.get_stored_gmail();
     this.gapiLoaded()
     this.gisLoaded()
     this.set_view()
+    this.getShifts()
     this.getShiftsYear().then(() => {
       if (this.user) {
         this.filterShifts()

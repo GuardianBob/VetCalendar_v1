@@ -19,3 +19,5 @@ The following must be at the end of the .htaccess file for the frontend or there
   RewriteRule . /index.html [L]
 </IfModule>
 '''
+# VetCalendar_v1
+Calendar display for loaded vet shifts and google calendar sync

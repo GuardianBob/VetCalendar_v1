@@ -40,7 +40,8 @@ ALLOWED_HOSTS = [
     "jmeyer-dev.com", 
     "jbear-creations.com", 
     "jbearcreations.com",
-    "vet-cal.jmeyer-dev.com",  # MUST INCLUDE DOMAIN to avoid CORS issues
+    "vet-cal.jmeyer-dev.com",
+    "vetcal.jgmeyer.dev",  # MUST INCLUDE DOMAIN to avoid CORS issues
     "vet-backend.jmeyer-dev.com",  # MUST INCLUDE DOMAIN to avoid CORS issues
     "vet-cal-dev.jmeyer-dev.com",  # MUST INCLUDE DOMAIN to avoid CORS issues
     "vet-backend-dev.jmeyer-dev.com",  # MUST INCLUDE DOMAIN to avoid CORS issues
@@ -55,6 +56,7 @@ CORS_ORIGIN_WHITELIST = [
     "https://jbear-creations.com", 
     "https://jbearcreations.com",
     "https://vet-cal.jmeyer-dev.com",
+    "https://vetcal.jgmeyer.dev",
     "https://vet-backend.jmeyer-dev.com",
     "https://vet-cal-dev.jmeyer-dev.com",
     "https://vet-backend-dev.jmeyer-dev.com",
@@ -68,6 +70,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://jbear-creations.com/*", 
     "https://jbearcreations.com/*",
     "https://vet-cal.jmeyer-dev.com/*",
+    "https://vetcal.jgmeyer.dev/*",
     "https://vet-backend.jmeyer-dev.com/*",
     "https://vet-cal-dev.jmeyer-dev.com/*",
     "https://vet-backend-dev.jmeyer-dev.com/*",

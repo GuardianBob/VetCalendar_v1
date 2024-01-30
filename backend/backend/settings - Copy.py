@@ -33,9 +33,22 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = os.getenv("DEBUG", "False") == "True"
 DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "False") == "True"
 
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    'jbearlocal.com',
+    "jmeyer-dev.com", 
+    "jbear-creations.com", 
+    "jbearcreations.com",
+    "jgmeyer.dev",
+    "vet-cal.jmeyer-dev.com",
+    "vetcal.jgmeyer.dev",  # MUST INCLUDE DOMAIN to avoid CORS issues
+    "vet-backend.jmeyer-dev.com",  # MUST INCLUDE DOMAIN to avoid CORS issues
+    "vet-cal-dev.jmeyer-dev.com",  # MUST INCLUDE DOMAIN to avoid CORS issues
+    "vet-backend-dev.jmeyer-dev.com",  # MUST INCLUDE DOMAIN to avoid CORS issues
+]
 
-host_list = [
+CORS_ORIGIN_WHITELIST = [
     'http://localhost:9000',
     'http://127.0.0.1:9000',
     'http://127.0.0.1:8000',
@@ -43,36 +56,29 @@ host_list = [
     "https://jmeyer-dev.com", 
     "https://jbear-creations.com", 
     "https://jbearcreations.com",
+    "https://jgmeyer.dev",
     "https://vet-cal.jmeyer-dev.com",
+    "https://vetcal.jgmeyer.dev",
     "https://vet-backend.jmeyer-dev.com",
     "https://vet-cal-dev.jmeyer-dev.com",
-    "https://vet-backend-dev.jmeyer-dev.com",    
-
+    "https://vet-backend-dev.jmeyer-dev.com",
 ]
-# if DEBUG == "False":
-#     host_list = [
-#         "https://jmeyer-dev.com", 
-#         "https://jbear-creations.com", 
-#         "https://jbearcreations.com",
-#         "https://vet-cal.jmeyer-dev.com",
-#         "https://vet-backend.jmeyer-dev.com",
-#         "https://vet-cal-dev.jmeyer-dev.com",
-#         "https://vet-backend-dev.jmeyer-dev.com",
-#     ]
-# else: 
-#     host_list = [
-#         'http://localhost:9000',
-#         'http://127.0.0.1:9000',
-#         'http://127.0.0.1:8000',
-#         'http://localhost',
-#         "https://jmeyer-dev.com", 
-#         "https://jbear-creations.com", 
-#         "https://jbearcreations.com",
-#         "https://vet-cal.jmeyer-dev.com",
-#         "https://vet-backend.jmeyer-dev.com",
-#         "https://vet-cal-dev.jmeyer-dev.com",
-#         "https://vet-backend-dev.jmeyer-dev.com",
-#     ]    
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:9000/*',
+    'http://*.127.0.0.1',
+    'http://*.127.0.0.1:8000/*',
+    "https://jmeyer-dev.com/*", 
+    "https://jbear-creations.com/*", 
+    "https://jbearcreations.com/*",
+    "https://jgmeyer.dev/*",
+    "https://vet-cal.jmeyer-dev.com/*",
+    "https://vetcal.jgmeyer.dev/*",
+    "https://vet-backend.jmeyer-dev.com/*",
+    "https://vet-cal-dev.jmeyer-dev.com/*",
+    "https://vet-backend-dev.jmeyer-dev.com/*",
+]
+    
 
 # Application definition
 
@@ -100,55 +106,16 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ALLOWED_HOSTS = [
-    '*'
-    # 'http://localhost',
-    # 'localhost',
-    # '127.0.0.1',
-    # 'jbearlocal.com',
-    # "jmeyer-dev.com", 
-    # "jbear-creations.com", 
-    # "jbearcreations.com",
-    # "vet-cal.jmeyer-dev.com",  # MUST INCLUDE DOMAIN to avoid CORS issues
-    # "vet-backend.jmeyer-dev.com",  # MUST INCLUDE DOMAIN to avoid CORS issues
-    # "vet-cal-dev.jmeyer-dev.com",  # MUST INCLUDE DOMAIN to avoid CORS issues
-    # "vet-backend-dev.jmeyer-dev.com",  # MUST INCLUDE DOMAIN to avoid CORS issues
-    # 'srv442350.hstgr.cloud',
-    # '191.101.232.26',
-]
-
-CORS_ORIGIN_WHITELIST = [
-    'http://localhost:9000',
-    'http://127.0.0.1:9000',
-    'http://127.0.0.1:8000',
-    'http://localhost',
-    "https://jmeyer-dev.com", 
-    "https://jbear-creations.com", 
-    "https://jbearcreations.com",
-    "https://vet-cal.jmeyer-dev.com",
-    "https://vet-backend.jmeyer-dev.com",
-    "https://vet-cal-dev.jmeyer-dev.com",
-    "https://vet-backend-dev.jmeyer-dev.com",
-]
-
-# CSRF_TRUSTED_ORIGINS = [
-#     'http://localhost:9000/*',
-#     'http://*.127.0.0.1',
-#     'http://*.127.0.0.1:8000/*',
-#     "https://jmeyer-dev.com/*", 
-#     "https://jbear-creations.com/*", 
-#     "https://jbearcreations.com/*",
-#     "https://vet-cal.jmeyer-dev.com/*",
-#     "https://vet-backend.jmeyer-dev.com/*",
-#     "https://vet-cal-dev.jmeyer-dev.com/*",
-#     "https://vet-backend-dev.jmeyer-dev.com/*",
-# ]
-
-CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS").split(" ")
-
-CORS_ALLOWED_ORIGINS = host_list
-
 ROOT_URLCONF = 'backend.urls'
+
+CORS_ALLOW_METHODS = (
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+)
 
 TEMPLATES = [
     {
@@ -187,13 +154,11 @@ else:
             'NAME': os.getenv('DB_TABLE'),
             'USER': os.getenv('DB_USER'),
             'PASSWORD': os.getenv('DB_PASS'),
-            'HOST': os.getenv('DB_HOST'),
-            # 'HOST': 'localhost',
-            # 'HOST': '192.168.2.230',
+            'HOST': 'localhost',
             'PORT': '3306',
-            # 'OPTIONS': {  
-            #     'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"  
-            # }
+            'OPTIONS': {  
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"  
+            }
         }
     }
 
@@ -237,13 +202,13 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-# STATICFILES_DIRS = [
-#     os.path.join(BASE_DIR, "static"),
-#     'VetCalendar/static/',
-#     # 'ShiftScheduler/static/',
-# ]
-STATIC_ROOT = os.path.join(BASE_DIR, "static") #local
-# STATIC_ROOT = os.path.join(BASE_DIR, 'public') # cPanel
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+    'VetCalendar/static/',
+    # 'ShiftScheduler/static/',
+]
+# STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles") #local
+STATIC_ROOT = os.path.join(BASE_DIR, 'public') # cPanel
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, "tmp") # cPanel

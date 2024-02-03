@@ -85,17 +85,14 @@
 # ==== Google Calendar API reqs =====
 from __future__ import print_function
 
-import datetime, pytz
+import datetime, pytz, sys, traceback
 from datetime import timedelta
 import os.path
 from .models import Calendar
 from django.utils import timezone
+from django.http import JsonResponse
 
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
+
 # ================================================================
 
 from docx import Document
@@ -134,6 +131,15 @@ day_list = [
     "saturday", "sat",
     "sunday", "sun"
   ]
+
+def trace_error(e, isForm=False):
+    exc_type, exc_value, exc_traceback = sys.exc_info()
+    filename, line_number, func_name, text = traceback.extract_tb(exc_traceback)[0]
+    print(f"An error occurred in file {filename} on line {line_number} in {func_name}(): {text}")
+    print("Error: ", e)
+    if isForm:
+        return JsonResponse({'message':'Form is invalid'}, status=500)
+    return JsonResponse({'message':'Something went wrong'}, status=500)
 
 def convert_schedule(schedule, user, month, year):
   user_month = month
@@ -344,8 +350,10 @@ def load_database(shifts, month, year):
         year = year,
       )
     return
-  except HttpError as error:
-    print('An error occurred: %s' % error)  
+  # except HttpError as error:
+  #   print('An error occurred: %s' % error)  
+  except Exception as e:
+    return trace_error(e, True)
 
 
 SCOPES = ['https://www.googleapis.com/auth/calendar']
